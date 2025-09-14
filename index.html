@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Prompt Manager</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-brain"></i> Personal Prompt Manager</h1>
+            <p>Store and organize your AI prompts with GitHub as your backend</p>
+        </header>
+
+        <div class="config-section">
+            <button id="config-toggle" class="config-btn">
+                <i class="fas fa-cog"></i> Configuration
+            </button>
+            <div id="config-panel" class="config-panel">
+                <h3>GitHub Configuration</h3>
+                <div class="config-form">
+                    <input type="text" id="github-token" placeholder="GitHub Personal Access Token" />
+                    <input type="text" id="repo-owner" placeholder="GitHub Username" />
+                    <input type="text" id="repo-name" placeholder="Repository Name" />
+                    <button id="save-config">Save Configuration</button>
+                </div>
+                <div class="config-help">
+                    <p><strong>Setup Instructions:</strong></p>
+                    <ol>
+                        <li>Create a GitHub Personal Access Token with 'repo' permissions</li>
+                        <li>Enter your GitHub username and repository name</li>
+                        <li>Make sure your repository has a 'prompts' folder</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <main>
+            <section class="submit-section">
+                <h2><i class="fas fa-plus-circle"></i> Add New Prompt</h2>
+                <form id="prompt-form" class="prompt-form">
+                    <div class="form-group">
+                        <label for="prompt-name"><i class="fas fa-tag"></i> Name:</label>
+                        <input type="text" id="prompt-name" required placeholder="Enter a descriptive name for your prompt">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="prompt-text"><i class="fas fa-comment-dots"></i> Prompt Text:</label>
+                        <textarea id="prompt-text" required placeholder="Enter your prompt here..." rows="6"></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="prompt-rating"><i class="fas fa-star"></i> Rating:</label>
+                            <select id="prompt-rating" required>
+                                <option value="">Select rating</option>
+                                <option value="1">⭐ 1 - Poor</option>
+                                <option value="2">⭐⭐ 2 - Fair</option>
+                                <option value="3">⭐⭐⭐ 3 - Good</option>
+                                <option value="4">⭐⭐⭐⭐ 4 - Very Good</option>
+                                <option value="5">⭐⭐⭐⭐⭐ 5 - Excellent</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="prompt-attachment"><i class="fas fa-paperclip"></i> Attachment (optional):</label>
+                            <input type="file" id="prompt-attachment" accept=".txt,.md,.json,.pdf,.doc,.docx">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">
+                        <i class="fas fa-save"></i> Save Prompt
+                    </button>
+                </form>
+            </section>
+
+            <section class="prompts-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-list"></i> Saved Prompts</h2>
+                    <button id="refresh-prompts" class="refresh-btn">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+                <div id="loading" class="loading">
+                    <i class="fas fa-spinner fa-spin"></i> Loading prompts...
+                </div>
+                <div id="prompts-container" class="prompts-container"></div>
+            </section>
+        </main>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
