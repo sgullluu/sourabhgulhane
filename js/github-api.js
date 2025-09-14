@@ -19,25 +19,10 @@ class GitHubAPI {
         });
     }
 
-    // Ensure we have a valid token (fetch from repository secret if needed)
-    async ensureToken() {
-        if (this.config.useRepositorySecret && !this.config.githubToken) {
-            console.log('Fetching token from repository secret: PROMPT_ACCESS_TOKEN');
-            this.config.githubToken = await this.config.fetchTokenFromSecret();
-        }
-        return this.config.githubToken;
-    }
-
     // Create or update a prompt file in the repository
     async createPrompt(promptData) {
         if (!this.config.isConfigured()) {
             throw new Error('GitHub configuration is not set. Please configure your settings first.');
-        }
-
-        // Ensure we have a valid token
-        await this.ensureToken();
-        if (!this.config.githubToken) {
-            throw new Error('Unable to obtain GitHub token. Please check your configuration.');
         }
 
         // Create a safe filename from the prompt name
@@ -85,12 +70,6 @@ class GitHubAPI {
     async fetchPrompts() {
         if (!this.config.isConfigured()) {
             throw new Error('GitHub configuration is not set. Please configure your settings first.');
-        }
-
-        // Ensure we have a valid token
-        await this.ensureToken();
-        if (!this.config.githubToken) {
-            throw new Error('Unable to obtain GitHub token. Please check your configuration.');
         }
 
         const url = `${this.config.getApiBaseUrl()}/contents/${this.config.promptsFolder}`;
@@ -244,12 +223,6 @@ class GitHubAPI {
     async testConnection() {
         if (!this.config.isConfigured()) {
             throw new Error('GitHub configuration is not set.');
-        }
-
-        // Ensure we have a valid token
-        await this.ensureToken();
-        if (!this.config.githubToken) {
-            throw new Error('Unable to obtain GitHub token. Please check your configuration.');
         }
 
         const url = `${this.config.getApiBaseUrl()}`;
