@@ -222,8 +222,8 @@ class PromptManager {
     // Ensure prompts folder exists
     async ensurePromptsFolder() {
         try {
-            await this.githubAPI.ensurePromptsFolder();
-            return { success: true };
+            const result = await this.githubAPI.ensurePromptsFolder();
+            return result;
         } catch (error) {
             return { success: false, error: error.message };
         }

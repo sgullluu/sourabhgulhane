@@ -220,12 +220,23 @@ class GitHubAPI {
                 });
 
                 if (!createResponse.ok) {
-                    throw new Error(`Failed to create prompts folder: ${createResponse.status} ${createResponse.statusText}`);
+                    // Don't throw an error if the folder creation fails (it might already exist)
+                    console.warn(`Could not create prompts folder: ${createResponse.status} ${createResponse.statusText}`);
+                    return { success: false, error: `Folder creation failed: ${createResponse.status}` };
                 }
+                console.log('Successfully created prompts folder');
+                return { success: true };
+            } else if (response.ok) {
+                // Folder already exists
+                console.log('Prompts folder already exists');
+                return { success: true };
+            } else {
+                throw new Error(`Failed to check prompts folder: ${response.status} ${response.statusText}`);
             }
         } catch (error) {
             console.error('Error ensuring prompts folder:', error);
-            throw error;
+            // Don't fail the entire process if folder check fails
+            return { success: false, error: error.message };
         }
     }
 

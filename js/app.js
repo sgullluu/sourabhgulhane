@@ -116,17 +116,18 @@ async function handleSaveConfiguration() {
     if (connectionTest.success) {
         promptManager.showStatus(`Successfully connected to ${connectionTest.data.repository}!`, 'success');
         
-        // Ensure prompts folder exists
+        // Ensure prompts folder exists (but don't fail if it already exists)
         const folderResult = await promptManager.ensurePromptsFolder();
-        if (folderResult.success) {
-            // Load prompts
-            await loadInitialPrompts();
-            
-            // Hide configuration panel
-            document.getElementById('config-panel').classList.remove('show');
-        } else {
-            promptManager.showStatus(`Warning: Could not create prompts folder: ${folderResult.error}`, 'error');
+        if (!folderResult.success) {
+            console.warn('Folder creation issue:', folderResult.error);
+            // Continue anyway - the folder might already exist
         }
+        
+        // Load prompts regardless of folder creation result
+        await loadInitialPrompts();
+        
+        // Hide configuration panel
+        document.getElementById('config-panel').classList.remove('show');
     } else {
         promptManager.showStatus(`Connection failed: ${connectionTest.error}`, 'error');
     }
