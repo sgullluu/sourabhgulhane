@@ -65,7 +65,7 @@ class GitHubAPI {
             const data = {
                 message: existingSha ? `Update prompt: ${promptData.name}` : `Add prompt: ${promptData.name}`,
                 content: btoa(JSON.stringify(promptWithMetadata, null, 2)),
-                branch: 'master'  // Changed from 'main' to 'master' to match your branch
+                branch: 'main'  // Using main branch
             };
 
             // Add sha if file exists (for updates)
@@ -174,7 +174,7 @@ class GitHubAPI {
         const data = {
             message: `Delete prompt: ${filename}`,
             sha: sha,
-            branch: 'master'
+            branch: 'main'
         };
 
         try {
@@ -214,7 +214,7 @@ class GitHubAPI {
                 const data = {
                     message: 'Create prompts folder',
                     content: btoa('# This file keeps the prompts folder in git'),
-                    branch: 'master'
+                    branch: 'main'
                 };
 
                 const createResponse = await fetch(createUrl, {
