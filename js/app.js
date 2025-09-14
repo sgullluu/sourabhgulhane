@@ -20,11 +20,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Load configuration UI
     loadConfigurationUI();
-
-    // Check if token has expired
-    if (config.isTokenExpired() && config.repoOwner && config.repoName) {
-        showTokenExpiredMessage();
-    }
     
     // If configured, load prompts
     if (config.isConfigured()) {
@@ -58,12 +53,6 @@ function setupEventListeners() {
         promptManager.refreshPrompts();
     });
 
-    // Handle token method radio buttons
-    const tokenMethodRadios = document.querySelectorAll('input[name="token-method"]');
-    tokenMethodRadios.forEach(radio => {
-        radio.addEventListener('change', handleTokenMethodChange);
-    });
-
     // Handle enter key in configuration inputs
     const configInputs = document.querySelectorAll('#config-panel input');
     configInputs.forEach(input => {
@@ -73,20 +62,6 @@ function setupEventListeners() {
             }
         });
     });
-}
-
-// Handle token method selection
-function handleTokenMethodChange(event) {
-    const manualSection = document.getElementById('manual-token-section');
-    const repoSecretSection = document.getElementById('repo-secret-section');
-    
-    if (event.target.value === 'manual') {
-        manualSection.style.display = 'block';
-        repoSecretSection.style.display = 'none';
-    } else {
-        manualSection.style.display = 'none';
-        repoSecretSection.style.display = 'block';
-    }
 }
 
 // Load existing configuration into the UI
@@ -101,27 +76,18 @@ function loadConfigurationUI() {
 
 // Handle configuration saving
 async function handleSaveConfiguration() {
+    const token = document.getElementById('github-token').value.trim();
     const owner = document.getElementById('repo-owner').value.trim();
     const repo = document.getElementById('repo-name').value.trim();
     const branch = document.getElementById('branch-name').value.trim() || 'main';
-    const useRepositorySecret = document.getElementById('repo-secret').checked;
-    
-    let token = '';
-    if (!useRepositorySecret) {
-        token = document.getElementById('github-token').value.trim();
-        if (!token) {
-            promptManager.showStatus('Please enter your GitHub token or switch to Repository Secret mode', 'error');
-            return;
-        }
-    }
 
-    if (!owner || !repo) {
-        promptManager.showStatus('Please fill in GitHub username and repository name', 'error');
+    if (!token || !owner || !repo) {
+        promptManager.showStatus('Please fill in all configuration fields', 'error');
         return;
     }
 
     // Save configuration
-    config.save(token, owner, repo, branch, useRepositorySecret);
+    config.save(token, owner, repo, branch);
     
     // Refresh the local config instance
     config = new Config();
@@ -271,32 +237,7 @@ function showConfigurationHelp() {
                 <li><strong>Save the configuration</strong> and start managing your prompts!</li>
             </ol>
             <p><strong>Note:</strong> Make sure your repository exists and is accessible with the provided token.</p>
-            <p><strong>Security Options:</strong></p>
-            <ul>
-                <li><strong>Manual Token:</strong> Encrypted session storage, expires when browser closes</li>
-                <li><strong>Repository Secret:</strong> Store token as <code>PROMPT_ACCESS_TOKEN</code> in your repository secrets</li>
-                <li>✓ No persistent storage of sensitive data in browser</li>
-                <li>✓ Secure GitHub API access</li>
-            </ul>
-        </div>
-    `;
-}
-
-// Show token expired message
-function showTokenExpiredMessage() {
-    const container = document.getElementById('prompts-container');
-    container.innerHTML = `
-        <div class="config-help-card" style="border-left-color: #f39c12;">
-            <h3><i class="fas fa-exclamation-triangle" style="color: #f39c12;"></i> Session Expired</h3>
-            <p>Your GitHub token has expired for security reasons.</p>
-            <p>Please click the Configuration button <i class="fas fa-cog"></i> and re-enter your GitHub token to continue.</p>
-            <p><strong>Why did this happen?</strong></p>
-            <ul>
-                <li>Enhanced security: Tokens automatically expire after 2 hours</li>
-                <li>Session-based storage: Tokens are cleared when browser closes</li>
-                <li>Encrypted storage: Tokens are encrypted before being stored</li>
-            </ul>
-            <p><em>This is a security feature to protect your GitHub access token.</em></p>
+            <p><strong>Your token will be stored permanently in your browser for convenience.</strong></p>
         </div>
     `;
 }
