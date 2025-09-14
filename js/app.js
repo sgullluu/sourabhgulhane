@@ -70,6 +70,7 @@ function loadConfigurationUI() {
         document.getElementById('github-token').value = config.githubToken;
         document.getElementById('repo-owner').value = config.repoOwner;
         document.getElementById('repo-name').value = config.repoName;
+        document.getElementById('branch-name').value = config.branchName;
     }
 }
 
@@ -78,6 +79,7 @@ async function handleSaveConfiguration() {
     const token = document.getElementById('github-token').value.trim();
     const owner = document.getElementById('repo-owner').value.trim();
     const repo = document.getElementById('repo-name').value.trim();
+    const branch = document.getElementById('branch-name').value.trim() || 'main';
 
     if (!token || !owner || !repo) {
         promptManager.showStatus('Please fill in all configuration fields', 'error');
@@ -85,7 +87,7 @@ async function handleSaveConfiguration() {
     }
 
     // Save configuration
-    config.save(token, owner, repo);
+    config.save(token, owner, repo, branch);
     
     // Refresh the local config instance
     config = new Config();
@@ -102,6 +104,7 @@ async function handleSaveConfiguration() {
     console.log('Configuration updated. New settings:', {
         owner: config.repoOwner,
         repo: config.repoName,
+        branch: config.branchName,
         apiUrl: config.getApiBaseUrl()
     });
 

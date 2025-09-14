@@ -12,6 +12,7 @@ class GitHubAPI {
         console.log('GitHub API configuration refreshed:', {
             owner: this.config.repoOwner,
             repo: this.config.repoName,
+            branch: this.config.branchName,
             configured: this.config.isConfigured(),
             apiBaseUrl: this.config.getApiBaseUrl()
         });
@@ -43,7 +44,7 @@ class GitHubAPI {
             const data = {
                 message: `Add prompt: ${promptData.name}`,
                 content: btoa(JSON.stringify(promptWithMetadata, null, 2)),
-                branch: 'main'  // Using main branch
+                branch: this.config.branchName
             };
 
             const response = await fetch(url, {
@@ -147,7 +148,7 @@ class GitHubAPI {
         const data = {
             message: `Delete prompt: ${filename}`,
             sha: sha,
-            branch: 'main'
+            branch: this.config.branchName
         };
 
         try {
@@ -187,7 +188,7 @@ class GitHubAPI {
                 const data = {
                     message: 'Create prompts folder',
                     content: btoa('# This file keeps the prompts folder in git'),
-                    branch: 'main'
+                    branch: this.config.branchName
                 };
 
                 const createResponse = await fetch(createUrl, {
