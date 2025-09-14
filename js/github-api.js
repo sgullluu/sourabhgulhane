@@ -12,7 +12,8 @@ class GitHubAPI {
         console.log('GitHub API configuration refreshed:', {
             owner: this.config.repoOwner,
             repo: this.config.repoName,
-            configured: this.config.isConfigured()
+            configured: this.config.isConfigured(),
+            apiBaseUrl: this.config.getApiBaseUrl()
         });
     }
 
