@@ -25,7 +25,7 @@ class GitHubAPI {
         }
 
         // Create a safe filename from the prompt name
-        const filename = this.createSafeFilename(promptData.name);
+        const filename = await this.createSafeFilename(promptData.name);
         const url = `${this.config.getApiBaseUrl()}/contents/${this.config.promptsFolder}/${filename}.json`;
 
         // Add metadata to the prompt data
@@ -248,16 +248,65 @@ class GitHubAPI {
     }
 
     // Utility methods
-    createSafeFilename(name) {
-        // Replace spaces and special characters with underscores and add timestamp for uniqueness
+    async createSafeFilename(name) {
+        // Replace spaces and special characters with underscores for safe filename
         const safeName = name.toLowerCase()
-            .replace(/[^a-z0-9\-_]/g, '_')
+            .replace(/[^a-z0-9\-_\s]/g, '_')
+            .replace(/\s+/g, '_')
             .replace(/_+/g, '_')
             .replace(/^_|_$/g, '');
         
-        // Add timestamp to ensure uniqueness
-        const timestamp = Date.now();
-        return `${safeName}_${timestamp}`;
+        // Get existing files to determine the next number
+        try {
+            const existingFiles = await this.getExistingFiles();
+            const basePattern = new RegExp(`^${safeName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}_\\d+\\.json$`);
+            
+            // Find all files that match the pattern
+            const matchingFiles = existingFiles.filter(filename => basePattern.test(filename));
+            
+            // Extract numbers and find the highest one
+            let maxNumber = 0;
+            matchingFiles.forEach(filename => {
+                const match = filename.match(/_(\d+)\.json$/);
+                if (match) {
+                    const num = parseInt(match[1], 10);
+                    if (num > maxNumber) {
+                        maxNumber = num;
+                    }
+                }
+            });
+            
+            // Return the next number with zero padding
+            const nextNumber = (maxNumber + 1).toString().padStart(2, '0');
+            return `${safeName}_${nextNumber}`;
+            
+        } catch (error) {
+            console.warn('Could not check existing files, using 01:', error);
+            // If we can't check existing files, default to 01
+            return `${safeName}_01`;
+        }
+    }
+
+    // Helper method to get existing filenames in the prompts folder
+    async getExistingFiles() {
+        try {
+            const url = `${this.config.getApiBaseUrl()}/contents/${this.config.promptsFolder}?ref=${this.config.branchName}`;
+            const response = await fetch(url, {
+                headers: this.config.getHeaders()
+            });
+
+            if (!response.ok) {
+                return []; // Return empty array if folder doesn't exist or other error
+            }
+
+            const files = await response.json();
+            return files
+                .filter(file => file.name.endsWith('.json'))
+                .map(file => file.name);
+        } catch (error) {
+            console.warn('Error fetching existing files:', error);
+            return [];
+        }
     }
 
     generateId() {
