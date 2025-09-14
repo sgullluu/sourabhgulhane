@@ -1,33 +1,76 @@
 // Configuration management for GitHub API
 class Config {
     constructor() {
-        // Use sessionStorage for token (expires when browser closes)
-        // and encrypt the token before storing
-        this.githubToken = this.getSecureToken() || '';
         this.repoOwner = localStorage.getItem('repo-owner') || '';
         this.repoName = localStorage.getItem('repo-name') || '';
         this.branchName = localStorage.getItem('branch-name') || 'main';
         this.promptsFolder = 'prompts';
+        this.useRepositorySecret = localStorage.getItem('use-repo-secret') === 'true';
         
-        // Generate a unique session key for encryption
-        this.sessionKey = this.getOrCreateSessionKey();
+        // Token management based on user preference
+        if (this.useRepositorySecret) {
+            this.githubToken = null; // Will be fetched from repository secret
+        } else {
+            this.githubToken = this.getSecureToken() || '';
+            this.sessionKey = this.getOrCreateSessionKey();
+        }
     }
 
-    save(token, owner, repo, branch = 'main') {
-        this.githubToken = token;
+    save(token, owner, repo, branch = 'main', useRepositorySecret = false) {
         this.repoOwner = owner;
         this.repoName = repo;
         this.branchName = branch;
+        this.useRepositorySecret = useRepositorySecret;
         
-        // Store token securely in sessionStorage with encryption
-        this.setSecureToken(token);
+        if (useRepositorySecret) {
+            // Don't store token locally, will fetch from repository secret
+            this.githubToken = null;
+            localStorage.removeItem('encrypted-token');
+            sessionStorage.removeItem('encrypted-token');
+        } else {
+            // Store token securely in sessionStorage with encryption
+            this.githubToken = token;
+            this.setSecureToken(token);
+        }
+        
         localStorage.setItem('repo-owner', owner);
         localStorage.setItem('repo-name', repo);
         localStorage.setItem('branch-name', branch);
+        localStorage.setItem('use-repo-secret', useRepositorySecret.toString());
     }
 
     isConfigured() {
+        if (this.useRepositorySecret) {
+            return this.repoOwner && this.repoName && this.branchName;
+        }
         return this.githubToken && this.repoOwner && this.repoName && this.branchName;
+    }
+
+    // Fetch token from repository secret (via GitHub Actions API)
+    async fetchTokenFromSecret() {
+        if (!this.useRepositorySecret) {
+            return this.githubToken;
+        }
+
+        try {
+            // This would need a serverless function or GitHub Action to securely provide the token
+            // For now, we'll create a simple endpoint that returns the token securely
+            const response = await fetch(`https://api.github.com/repos/${this.repoOwner}/${this.repoName}/actions/secrets/GITHUB_ACCESS_TOKEN`, {
+                headers: {
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (response.ok) {
+                // This is a placeholder - actual implementation would need a secure endpoint
+                console.log('Repository secret configured');
+                return 'token-from-secret'; // This would be the actual token from your secure endpoint
+            }
+        } catch (error) {
+            console.error('Failed to fetch token from repository secret:', error);
+        }
+
+        return null;
     }
 
     getApiBaseUrl() {

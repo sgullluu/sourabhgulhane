@@ -58,6 +58,12 @@ function setupEventListeners() {
         promptManager.refreshPrompts();
     });
 
+    // Handle token method radio buttons
+    const tokenMethodRadios = document.querySelectorAll('input[name="token-method"]');
+    tokenMethodRadios.forEach(radio => {
+        radio.addEventListener('change', handleTokenMethodChange);
+    });
+
     // Handle enter key in configuration inputs
     const configInputs = document.querySelectorAll('#config-panel input');
     configInputs.forEach(input => {
@@ -67,6 +73,20 @@ function setupEventListeners() {
             }
         });
     });
+}
+
+// Handle token method selection
+function handleTokenMethodChange(event) {
+    const manualSection = document.getElementById('manual-token-section');
+    const repoSecretSection = document.getElementById('repo-secret-section');
+    
+    if (event.target.value === 'manual') {
+        manualSection.style.display = 'block';
+        repoSecretSection.style.display = 'none';
+    } else {
+        manualSection.style.display = 'none';
+        repoSecretSection.style.display = 'block';
+    }
 }
 
 // Load existing configuration into the UI
@@ -81,18 +101,27 @@ function loadConfigurationUI() {
 
 // Handle configuration saving
 async function handleSaveConfiguration() {
-    const token = document.getElementById('github-token').value.trim();
     const owner = document.getElementById('repo-owner').value.trim();
     const repo = document.getElementById('repo-name').value.trim();
     const branch = document.getElementById('branch-name').value.trim() || 'main';
+    const useRepositorySecret = document.getElementById('repo-secret').checked;
+    
+    let token = '';
+    if (!useRepositorySecret) {
+        token = document.getElementById('github-token').value.trim();
+        if (!token) {
+            promptManager.showStatus('Please enter your GitHub token or switch to Repository Secret mode', 'error');
+            return;
+        }
+    }
 
-    if (!token || !owner || !repo) {
-        promptManager.showStatus('Please fill in all configuration fields', 'error');
+    if (!owner || !repo) {
+        promptManager.showStatus('Please fill in GitHub username and repository name', 'error');
         return;
     }
 
     // Save configuration
-    config.save(token, owner, repo, branch);
+    config.save(token, owner, repo, branch, useRepositorySecret);
     
     // Refresh the local config instance
     config = new Config();

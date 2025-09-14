@@ -392,3 +392,56 @@ header p {
     display: block;
     padding-left: 5px;
 }
+
+/* Token Method Selection */
+.token-method {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.checkbox-label input[type="radio"] {
+    margin-right: 0.5rem;
+}
+
+.repo-secret-info {
+    background: #e8f5e8;
+    border: 1px solid #28a745;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.repo-secret-info i {
+    color: #28a745;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.repo-secret-info strong {
+    color: #155724;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.repo-secret-info p {
+    margin: 0.5rem 0;
+    color: #155724;
+}
+
+.repo-secret-info small {
+    color: #6c757d;
+    font-style: italic;
+}

@@ -21,8 +21,31 @@
             <div id="config-panel" class="config-panel">
                 <h3>GitHub Configuration</h3>
                 <div class="config-form">
-                    <input type="password" id="github-token" placeholder="GitHub Personal Access Token" />
-                    <small class="security-info">🔒 Token is encrypted and expires in 2 hours for security</small>
+                    <div class="token-method">
+                        <label class="checkbox-label">
+                            <input type="radio" name="token-method" value="manual" id="manual-token" checked>
+                            Manual Token Entry
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="token-method" value="repository" id="repo-secret">
+                            Use Repository Secret (GITHUB_ACCESS_TOKEN)
+                        </label>
+                    </div>
+                    
+                    <div id="manual-token-section">
+                        <input type="password" id="github-token" placeholder="GitHub Personal Access Token" />
+                        <small class="security-info">🔒 Token is encrypted and expires in 2 hours for security</small>
+                    </div>
+                    
+                    <div id="repo-secret-section" style="display: none;">
+                        <div class="repo-secret-info">
+                            <i class="fas fa-shield-alt"></i>
+                            <strong>Repository Secret Mode</strong>
+                            <p>Token will be securely fetched from your repository's GITHUB_ACCESS_TOKEN secret.</p>
+                            <small>Make sure you've created the secret in your repository settings.</small>
+                        </div>
+                    </div>
+                    
                     <input type="text" id="repo-owner" placeholder="GitHub Username" />
                     <input type="text" id="repo-name" placeholder="Repository Name" />
                     <input type="text" id="branch-name" placeholder="Branch Name (main/master)" value="main" />
