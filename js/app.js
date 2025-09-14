@@ -21,6 +21,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load configuration UI
     loadConfigurationUI();
 
+    // Check if token has expired
+    if (config.isTokenExpired() && config.repoOwner && config.repoName) {
+        showTokenExpiredMessage();
+    }
+    
     // If configured, load prompts
     if (config.isConfigured()) {
         await loadInitialPrompts();
@@ -237,6 +242,32 @@ function showConfigurationHelp() {
                 <li><strong>Save the configuration</strong> and start managing your prompts!</li>
             </ol>
             <p><strong>Note:</strong> Make sure your repository exists and is accessible with the provided token.</p>
+            <p><strong>Security Features:</strong></p>
+            <ul>
+                <li>✓ Token stored encrypted in session storage</li>
+                <li>✓ Automatic expiration after 2 hours</li>
+                <li>✓ Token cleared when browser closes</li>
+                <li>✓ No persistent storage of sensitive data</li>
+            </ul>
+        </div>
+    `;
+}
+
+// Show token expired message
+function showTokenExpiredMessage() {
+    const container = document.getElementById('prompts-container');
+    container.innerHTML = `
+        <div class="config-help-card" style="border-left-color: #f39c12;">
+            <h3><i class="fas fa-exclamation-triangle" style="color: #f39c12;"></i> Session Expired</h3>
+            <p>Your GitHub token has expired for security reasons.</p>
+            <p>Please click the Configuration button <i class="fas fa-cog"></i> and re-enter your GitHub token to continue.</p>
+            <p><strong>Why did this happen?</strong></p>
+            <ul>
+                <li>Enhanced security: Tokens automatically expire after 2 hours</li>
+                <li>Session-based storage: Tokens are cleared when browser closes</li>
+                <li>Encrypted storage: Tokens are encrypted before being stored</li>
+            </ul>
+            <p><em>This is a security feature to protect your GitHub access token.</em></p>
         </div>
     `;
 }
