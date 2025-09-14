@@ -98,38 +98,48 @@ class GitHubAPI {
         }
 
         const url = `${this.config.getApiBaseUrl()}/contents/${this.config.promptsFolder}`;
+        console.log('Fetching prompts from URL:', url);
 
         try {
             const response = await fetch(url, {
                 headers: this.config.getHeaders()
             });
 
+            console.log('Fetch response status:', response.status);
+
             if (!response.ok) {
                 if (response.status === 404) {
+                    console.log('Prompts folder not found, returning empty array');
                     // Prompts folder doesn't exist yet, return empty array
                     return [];
                 }
-                throw new Error(`Failed to fetch prompts: ${response.status} ${response.statusText}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`Failed to fetch prompts: ${response.status} ${response.statusText}. ${errorData.message || ''}`);
             }
 
             const files = await response.json();
+            console.log('Found files:', files);
             
             // Filter only JSON files
             const jsonFiles = files.filter(file => file.name.endsWith('.json'));
+            console.log('JSON files found:', jsonFiles.length, jsonFiles.map(f => f.name));
             
             if (jsonFiles.length === 0) {
+                console.log('No JSON files found, returning empty array');
                 return [];
             }
 
             // Fetch content of each JSON file
             const promptPromises = jsonFiles.map(async (file) => {
                 try {
+                    console.log(`Fetching content for ${file.name} from:`, file.download_url);
                     const contentResponse = await fetch(file.download_url);
                     if (!contentResponse.ok) {
-                        console.warn(`Failed to fetch content for ${file.name}`);
+                        console.warn(`Failed to fetch content for ${file.name}: ${contentResponse.status}`);
                         return null;
                     }
                     const promptData = await contentResponse.json();
+                    console.log(`Successfully parsed ${file.name}:`, promptData);
                     return {
                         ...promptData,
                         filename: file.name,
@@ -143,7 +153,9 @@ class GitHubAPI {
 
             const prompts = await Promise.all(promptPromises);
             // Filter out null values (failed fetches)
-            return prompts.filter(prompt => prompt !== null);
+            const validPrompts = prompts.filter(prompt => prompt !== null);
+            console.log('Successfully loaded prompts:', validPrompts.length, validPrompts);
+            return validPrompts;
 
         } catch (error) {
             console.error('Error fetching prompts:', error);

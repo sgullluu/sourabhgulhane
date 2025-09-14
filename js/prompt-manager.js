@@ -92,9 +92,12 @@ class PromptManager {
 
     // Display prompts in the UI
     displayPrompts(prompts) {
+        console.log('displayPrompts called with:', prompts);
         const container = document.getElementById('prompts-container');
+        console.log('Container found:', container);
         
         if (!prompts || prompts.length === 0) {
+            console.log('No prompts to display, showing empty message');
             container.innerHTML = `
                 <div class="no-prompts">
                     <i class="fas fa-info-circle"></i>
@@ -111,9 +114,15 @@ class PromptManager {
             return dateB - dateA;
         });
 
-        container.innerHTML = sortedPrompts
+        console.log('Sorted prompts:', sortedPrompts);
+        
+        const htmlContent = sortedPrompts
             .map(prompt => this.formatPromptForDisplay(prompt))
             .join('');
+        
+        console.log('Generated HTML:', htmlContent);
+        container.innerHTML = htmlContent;
+        console.log('Updated container innerHTML');
     }
 
     // Handle prompt deletion
@@ -137,13 +146,18 @@ class PromptManager {
 
     // Refresh prompts display
     async refreshPrompts() {
+        console.log('Refreshing prompts...');
         this.showLoading(true);
         const result = await this.loadPrompts();
         this.showLoading(false);
 
+        console.log('Load prompts result:', result);
+
         if (result.success) {
+            console.log('Displaying prompts:', result.prompts);
             this.displayPrompts(result.prompts);
         } else {
+            console.error('Error loading prompts:', result.error);
             this.showStatus(`Error loading prompts: ${result.error}`, 'error');
         }
     }
