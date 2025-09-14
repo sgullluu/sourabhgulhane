@@ -1,0 +1,9 @@
+{
+  "name": "My new prompt",
+  "promptText": "https://api.github.com/repos/sgullluu/prompt/contents/prompts 404 (Not Found)\nfetchPrompts @ github-api.js:77\nloadPrompts @ prompt-manager.js:45\nrefreshPrompts @ prompt-manager.js:155",
+  "rating": 2,
+  "attachment": null,
+  "id": "mfjtdl680eif34zjsmab",
+  "createdAt": "2025-09-14T14:52:25.328Z",
+  "updatedAt": "2025-09-14T14:52:25.328Z"
+}
