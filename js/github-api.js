@@ -13,7 +13,6 @@ class GitHubAPI {
             owner: this.config.repoOwner,
             repo: this.config.repoName,
             branch: this.config.branchName,
-            useRepositorySecret: this.config.useRepositorySecret,
             configured: this.config.isConfigured(),
             apiBaseUrl: this.config.getApiBaseUrl()
         });
@@ -72,8 +71,8 @@ class GitHubAPI {
             throw new Error('GitHub configuration is not set. Please configure your settings first.');
         }
 
-        const url = `${this.config.getApiBaseUrl()}/contents/${this.config.promptsFolder}`;
-        console.log('Fetching prompts from URL:', url);
+        const url = `${this.config.getApiBaseUrl()}/contents/${this.config.promptsFolder}?ref=${this.config.branchName}`;
+        console.log('Fetching prompts from URL:', url, 'Branch:', this.config.branchName);
 
         try {
             const response = await fetch(url, {
@@ -176,7 +175,7 @@ class GitHubAPI {
             throw new Error('GitHub configuration is not set.');
         }
 
-        const url = `${this.config.getApiBaseUrl()}/contents/${this.config.promptsFolder}`;
+        const url = `${this.config.getApiBaseUrl()}/contents/${this.config.promptsFolder}?ref=${this.config.branchName}`;
 
         try {
             const response = await fetch(url, {
