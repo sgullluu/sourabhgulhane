@@ -24,13 +24,55 @@ class GitHubAPI {
             updatedAt: new Date().toISOString()
         };
 
-        const data = {
-            message: `Add prompt: ${promptData.name}`,
-            content: btoa(JSON.stringify(promptWithMetadata, null, 2)),
-            branch: 'main'
-        };
-
         try {
+            // First, check if the file already exists
+            let existingSha = null;
+            try {
+                const checkResponse = await fetch(url, {
+                    method: 'GET',
+                    headers: this.config.getHeaders()
+                });
+                
+                if (checkResponse.ok) {
+                    const existingFile = await checkResponse.json();
+                    existingSha = existingFile.sha;
+                    
+                    // If file exists, ask user if they want to overwrite
+                    const shouldOverwrite = confirm(`A prompt with the name "${promptData.name}" already exists. Do you want to overwrite it?`);
+                    if (!shouldOverwrite) {
+                        throw new Error('File already exists and user chose not to overwrite');
+                    }
+                    
+                    // Update the metadata for existing file
+                    promptWithMetadata.updatedAt = new Date().toISOString();
+                    // Keep the original creation date if it exists
+                    if (existingFile.content) {
+                        try {
+                            const existingContent = JSON.parse(atob(existingFile.content));
+                            if (existingContent.createdAt) {
+                                promptWithMetadata.createdAt = existingContent.createdAt;
+                                promptWithMetadata.id = existingContent.id || promptWithMetadata.id;
+                            }
+                        } catch (e) {
+                            // If we can't parse existing content, just use new data
+                        }
+                    }
+                }
+            } catch (checkError) {
+                // File doesn't exist, which is fine for creating a new one
+            }
+
+            const data = {
+                message: existingSha ? `Update prompt: ${promptData.name}` : `Add prompt: ${promptData.name}`,
+                content: btoa(JSON.stringify(promptWithMetadata, null, 2)),
+                branch: 'master'  // Changed from 'main' to 'master' to match your branch
+            };
+
+            // Add sha if file exists (for updates)
+            if (existingSha) {
+                data.sha = existingSha;
+            }
+
             const response = await fetch(url, {
                 method: 'PUT',
                 headers: this.config.getHeaders(),
@@ -39,12 +81,12 @@ class GitHubAPI {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(`Failed to create prompt: ${response.status} ${response.statusText}. ${errorData.message || ''}`);
+                throw new Error(`Failed to ${existingSha ? 'update' : 'create'} prompt: ${response.status} ${response.statusText}. ${errorData.message || ''}`);
             }
 
             return await response.json();
         } catch (error) {
-            console.error('Error creating prompt:', error);
+            console.error('Error creating/updating prompt:', error);
             throw error;
         }
     }
@@ -120,7 +162,7 @@ class GitHubAPI {
         const data = {
             message: `Delete prompt: ${filename}`,
             sha: sha,
-            branch: 'main'
+            branch: 'master'
         };
 
         try {
@@ -160,7 +202,7 @@ class GitHubAPI {
                 const data = {
                     message: 'Create prompts folder',
                     content: btoa('# This file keeps the prompts folder in git'),
-                    branch: 'main'
+                    branch: 'master'
                 };
 
                 const createResponse = await fetch(createUrl, {
@@ -210,11 +252,15 @@ class GitHubAPI {
 
     // Utility methods
     createSafeFilename(name) {
-        // Replace spaces and special characters with underscores
-        return name.toLowerCase()
+        // Replace spaces and special characters with underscores and add timestamp for uniqueness
+        const safeName = name.toLowerCase()
             .replace(/[^a-z0-9\-_]/g, '_')
             .replace(/_+/g, '_')
             .replace(/^_|_$/g, '');
+        
+        // Add timestamp to ensure uniqueness
+        const timestamp = Date.now();
+        return `${safeName}_${timestamp}`;
     }
 
     generateId() {
