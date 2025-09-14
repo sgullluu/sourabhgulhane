@@ -54,9 +54,17 @@
                 <div class="config-help">
                     <p><strong>Setup Instructions:</strong></p>
                     <ol>
-                        <li>Create a GitHub Personal Access Token with 'repo' permissions</li>
+                        <li><strong>Manual Token:</strong> Enter your GitHub Personal Access Token directly</li>
+                        <li><strong>Repository Secret:</strong> Store token in GitHub repository secret named <code>PROMPT_ACCESS_TOKEN</code></li>
                         <li>Enter your GitHub username and repository name</li>
-                        <li>Make sure your repository has a 'prompts' folder</li>
+                        <li>Your repository will automatically create a 'prompts' folder</li>
+                    </ol>
+                    <p><strong>Repository Secret Setup:</strong></p>
+                    <ol>
+                        <li>Go to your repository Settings → Secrets and variables → Actions</li>
+                        <li>Click "New repository secret"</li>
+                        <li>Name: <code>PROMPT_ACCESS_TOKEN</code></li>
+                        <li>Value: Your GitHub Personal Access Token</li>
                     </ol>
                 </div>
             </div>

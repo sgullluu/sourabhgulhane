@@ -53,24 +53,39 @@ class Config {
         }
 
         try {
-            // This would need a serverless function or GitHub Action to securely provide the token
-            // For now, we'll create a simple endpoint that returns the token securely
-            const response = await fetch(`https://api.github.com/repos/${this.repoOwner}/${this.repoName}/actions/secrets/GITHUB_ACCESS_TOKEN`, {
+            // Check if repository secret PROMPT_ACCESS_TOKEN exists
+            // Note: We can't directly read secrets via API for security reasons
+            // This is a placeholder that would need a secure endpoint or GitHub Action
+            const response = await fetch(`https://api.github.com/repos/${this.repoOwner}/${this.repoName}/actions/secrets/PROMPT_ACCESS_TOKEN`, {
                 headers: {
                     'Accept': 'application/vnd.github.v3+json'
                 }
             });
 
             if (response.ok) {
-                // This is a placeholder - actual implementation would need a secure endpoint
-                console.log('Repository secret configured');
-                return 'token-from-secret'; // This would be the actual token from your secure endpoint
+                console.log('Repository secret PROMPT_ACCESS_TOKEN is configured');
+                // In a real implementation, you'd need a secure endpoint that can access the secret
+                // For now, we'll prompt the user to manually enter the token when using repo secrets
+                return await this.promptForToken();
+            } else {
+                throw new Error('Repository secret PROMPT_ACCESS_TOKEN not found');
             }
         } catch (error) {
-            console.error('Failed to fetch token from repository secret:', error);
+            console.error('Failed to access repository secret:', error);
+            return await this.promptForToken();
         }
+    }
 
-        return null;
+    // Prompt user for token when repository secret is not accessible
+    async promptForToken() {
+        return new Promise((resolve) => {
+            const token = prompt(
+                `Please enter your GitHub token from the PROMPT_ACCESS_TOKEN repository secret.\n\n` +
+                `This is needed because repository secrets cannot be read directly from the browser for security reasons.\n\n` +
+                `You can find this token in your repository's Settings → Secrets and variables → Actions → PROMPT_ACCESS_TOKEN`
+            );
+            resolve(token || null);
+        });
     }
 
     getApiBaseUrl() {

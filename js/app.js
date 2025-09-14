@@ -271,12 +271,12 @@ function showConfigurationHelp() {
                 <li><strong>Save the configuration</strong> and start managing your prompts!</li>
             </ol>
             <p><strong>Note:</strong> Make sure your repository exists and is accessible with the provided token.</p>
-            <p><strong>Security Features:</strong></p>
+            <p><strong>Security Options:</strong></p>
             <ul>
-                <li>✓ Token stored encrypted in session storage</li>
-                <li>✓ Automatic expiration after 2 hours</li>
-                <li>✓ Token cleared when browser closes</li>
-                <li>✓ No persistent storage of sensitive data</li>
+                <li><strong>Manual Token:</strong> Encrypted session storage, expires when browser closes</li>
+                <li><strong>Repository Secret:</strong> Store token as <code>PROMPT_ACCESS_TOKEN</code> in your repository secrets</li>
+                <li>✓ No persistent storage of sensitive data in browser</li>
+                <li>✓ Secure GitHub API access</li>
             </ul>
         </div>
     `;
