@@ -147,6 +147,10 @@ class PromptManager {
     // Refresh prompts display
     async refreshPrompts() {
         console.log('Refreshing prompts...');
+        
+        // Make sure we have the latest configuration
+        this.githubAPI.refreshConfig();
+        
         this.showLoading(true);
         const result = await this.loadPrompts();
         this.showLoading(false);

@@ -6,6 +6,16 @@ class GitHubAPI {
         this.config = new Config();
     }
 
+    // Refresh configuration (useful when switching repositories)
+    refreshConfig() {
+        this.config = new Config();
+        console.log('GitHub API configuration refreshed:', {
+            owner: this.config.repoOwner,
+            repo: this.config.repoName,
+            configured: this.config.isConfigured()
+        });
+    }
+
     // Create or update a prompt file in the repository
     async createPrompt(promptData) {
         if (!this.config.isConfigured()) {

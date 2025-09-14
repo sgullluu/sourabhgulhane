@@ -87,8 +87,14 @@ async function handleSaveConfiguration() {
     // Save configuration
     config.save(token, owner, repo);
     
-    // Update the GitHub API instance with new config
-    promptManager.githubAPI.config = config;
+    // Refresh the GitHub API configuration to pick up new settings
+    promptManager.githubAPI.refreshConfig();
+    
+    // Clear any cached prompts since we're switching repositories
+    promptManager.prompts = [];
+    
+    // Clear the UI to show we're loading new data
+    document.getElementById('prompts-container').innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Switching to new repository...</div>';
 
     promptManager.showStatus('Testing GitHub connection...', 'info');
 
