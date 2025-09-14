@@ -1,9 +1,0 @@
-{
-  "name": "Code Review Assistant",
-  "promptText": "You are an expert code reviewer. Please review the following code for:\n1. Security vulnerabilities\n2. Performance optimizations\n3. Code style and best practices\n4. Potential bugs\n\nProvide specific suggestions for improvement with examples.",
-  "rating": 5,
-  "attachment": null,
-  "id": "code_review_002",
-  "createdAt": "2025-09-14T15:05:00.000Z",
-  "updatedAt": "2025-09-14T15:05:00.000Z"
-}
