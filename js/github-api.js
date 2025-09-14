@@ -25,53 +25,15 @@ class GitHubAPI {
         };
 
         try {
-            // First, check if the file already exists
-            let existingSha = null;
-            try {
-                const checkResponse = await fetch(url, {
-                    method: 'GET',
-                    headers: this.config.getHeaders()
-                });
-                
-                if (checkResponse.ok) {
-                    const existingFile = await checkResponse.json();
-                    existingSha = existingFile.sha;
-                    
-                    // If file exists, ask user if they want to overwrite
-                    const shouldOverwrite = confirm(`A prompt with the name "${promptData.name}" already exists. Do you want to overwrite it?`);
-                    if (!shouldOverwrite) {
-                        throw new Error('File already exists and user chose not to overwrite');
-                    }
-                    
-                    // Update the metadata for existing file
-                    promptWithMetadata.updatedAt = new Date().toISOString();
-                    // Keep the original creation date if it exists
-                    if (existingFile.content) {
-                        try {
-                            const existingContent = JSON.parse(atob(existingFile.content));
-                            if (existingContent.createdAt) {
-                                promptWithMetadata.createdAt = existingContent.createdAt;
-                                promptWithMetadata.id = existingContent.id || promptWithMetadata.id;
-                            }
-                        } catch (e) {
-                            // If we can't parse existing content, just use new data
-                        }
-                    }
-                }
-            } catch (checkError) {
-                // File doesn't exist, which is fine for creating a new one
-            }
+            // Since we're using timestamps in filenames, files should be unique
+            // So we can skip the existence check and directly create the file
+            console.log('Creating new prompt file:', filename);
 
             const data = {
-                message: existingSha ? `Update prompt: ${promptData.name}` : `Add prompt: ${promptData.name}`,
+                message: `Add prompt: ${promptData.name}`,
                 content: btoa(JSON.stringify(promptWithMetadata, null, 2)),
                 branch: 'main'  // Using main branch
             };
-
-            // Add sha if file exists (for updates)
-            if (existingSha) {
-                data.sha = existingSha;
-            }
 
             const response = await fetch(url, {
                 method: 'PUT',
@@ -81,7 +43,7 @@ class GitHubAPI {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(`Failed to ${existingSha ? 'update' : 'create'} prompt: ${response.status} ${response.statusText}. ${errorData.message || ''}`);
+                throw new Error(`Failed to create prompt: ${response.status} ${response.statusText}. ${errorData.message || ''}`);
             }
 
             return await response.json();
