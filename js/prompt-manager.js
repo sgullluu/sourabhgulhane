@@ -292,6 +292,11 @@ class PromptManager {
         if (result.success) {
             console.log('Displaying prompts:', result.prompts);
             this.displayPrompts(result.prompts);
+            
+            // Update dashboard if updateDashboard function exists
+            if (typeof window.updateDashboard === 'function') {
+                window.updateDashboard();
+            }
         } else {
             console.error('Error loading prompts:', result.error);
             this.showStatus(`Error loading prompts: ${result.error}`, 'error');
@@ -600,6 +605,11 @@ class PromptManager {
                 noResults.remove();
             }
         }
+    }
+
+    // Get all loaded prompts
+    getAllPrompts() {
+        return this.prompts || [];
     }
 
     // Reset form to add mode

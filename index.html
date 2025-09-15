@@ -70,7 +70,10 @@
         <main>
             <!-- Tab Navigation -->
             <div class="tab-navigation">
-                <button class="tab-btn active" data-tab="add-prompt">
+                <button class="tab-btn active" data-tab="dashboard">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </button>
+                <button class="tab-btn" data-tab="add-prompt">
                     <i class="fas fa-plus-circle"></i> Add Prompt
                 </button>
                 <button class="tab-btn" data-tab="saved-prompts">
@@ -80,8 +83,105 @@
 
             <!-- Tab Content -->
             <div class="tab-content">
+                <!-- Dashboard Tab -->
+                <section id="dashboard" class="tab-pane active">
+                    <div class="dashboard-section">
+                        <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+                        
+                        <!-- Stats Cards -->
+                        <div class="stats-grid">
+                            <div class="stat-card total-prompts">
+                                <div class="stat-icon">
+                                    <i class="fas fa-file-text"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3 id="total-prompts-count">0</h3>
+                                    <p>Total Prompts</p>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card verified-prompts">
+                                <div class="stat-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3 id="verified-prompts-count">0</h3>
+                                    <p>Verified</p>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card categories-count">
+                                <div class="stat-icon">
+                                    <i class="fas fa-tags"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3 id="categories-count">0</h3>
+                                    <p>Categories</p>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card avg-rating">
+                                <div class="stat-icon">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3 id="avg-rating">0.0</h3>
+                                    <p>Avg Rating</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Actions -->
+                        <div class="dashboard-section">
+                            <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+                            <div class="quick-actions">
+                                <button class="quick-action-btn" onclick="switchToTab('add-prompt')">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Add New Prompt</span>
+                                </button>
+                                <button class="quick-action-btn" onclick="document.getElementById('category-toggle').click()">
+                                    <i class="fas fa-cog"></i>
+                                    <span>Manage Categories</span>
+                                </button>
+                                <button class="quick-action-btn" onclick="document.getElementById('refresh-prompts').click()">
+                                    <i class="fas fa-sync-alt"></i>
+                                    <span>Refresh Prompts</span>
+                                </button>
+                                <button class="quick-action-btn" onclick="exportPrompts()">
+                                    <i class="fas fa-download"></i>
+                                    <span>Export Data</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Activity -->
+                        <div class="dashboard-section">
+                            <h3><i class="fas fa-clock"></i> Recent Activity</h3>
+                            <div id="recent-activity" class="recent-activity">
+                                <!-- Recent activity items will be populated here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Category Overview -->
+                        <div class="dashboard-section">
+                            <h3><i class="fas fa-chart-pie"></i> Category Overview</h3>
+                            <div id="category-overview" class="category-overview">
+                                <!-- Category distribution will be shown here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Top Rated Prompts -->
+                        <div class="dashboard-section">
+                            <h3><i class="fas fa-trophy"></i> Top Rated Prompts</h3>
+                            <div id="top-rated-prompts" class="top-rated-list">
+                                <!-- Top rated prompts will be shown here -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
                 <!-- Add Prompt Tab -->
-                <section id="add-prompt" class="tab-pane active">
+                <section id="add-prompt" class="tab-pane">
                     <div class="submit-section">
                         <h2><i class="fas fa-plus-circle"></i> Add New Prompt</h2>
                         <form id="prompt-form" class="prompt-form">

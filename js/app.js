@@ -119,9 +119,11 @@ function switchToTab(targetTab) {
         targetButton.classList.add('active');
         targetPane.classList.add('active');
         
-        // If switching to saved prompts tab, refresh the prompts
+        // Handle tab-specific actions
         if (targetTab === 'saved-prompts' && config.isConfigured()) {
             promptManager.refreshPrompts();
+        } else if (targetTab === 'dashboard') {
+            updateDashboard();
         }
     }
 }
@@ -425,8 +427,8 @@ async function handlePromptSubmission(event) {
             // Refresh prompts display
             await promptManager.refreshPrompts();
             
-            // Switch to saved prompts tab
-            switchToTab('saved-prompts');
+            // Switch to dashboard to see updated statistics
+            switchToTab('dashboard');
         } else {
             promptManager.showStatus(`Error ${promptManager.editingPrompt ? 'updating' : 'saving'} prompt: ${result.error}`, 'error');
         }
@@ -524,11 +526,16 @@ async function loadInitialPrompts() {
     if (result.success) {
         promptManager.displayPrompts(result.prompts);
         
+        // Update dashboard with loaded data
+        updateDashboard();
+        
         if (result.prompts.length > 0) {
             promptManager.showStatus(`Loaded ${result.prompts.length} prompt(s)`, 'success');
         }
     } else {
         promptManager.showStatus(`Error loading prompts: ${result.error}`, 'error');
+        // Show dashboard even if loading failed
+        updateDashboard();
     }
 }
 
@@ -606,5 +613,220 @@ const additionalStyles = `
         }
     </style>
 `;
+
+// Dashboard functionality
+function updateDashboard() {
+    if (!config.isConfigured()) {
+        showDashboardNotConfigured();
+        return;
+    }
+    
+    const prompts = promptManager.getAllPrompts();
+    updateDashboardStats(prompts);
+    updateRecentActivity(prompts);
+    updateCategoryOverview(prompts);
+    updateTopRatedPrompts(prompts);
+}
+
+function updateDashboardStats(prompts) {
+    const totalCount = prompts.length;
+    const verifiedCount = prompts.filter(p => p.verified).length;
+    const categories = config.getCategories();
+    const avgRating = totalCount > 0 
+        ? (prompts.reduce((sum, p) => sum + (p.rating || 0), 0) / totalCount).toFixed(1)
+        : 0.0;
+    
+    document.getElementById('total-prompts-count').textContent = totalCount;
+    document.getElementById('verified-prompts-count').textContent = verifiedCount;
+    document.getElementById('categories-count').textContent = categories.length;
+    document.getElementById('avg-rating').textContent = avgRating;
+}
+
+function updateRecentActivity(prompts) {
+    const container = document.getElementById('recent-activity');
+    
+    if (prompts.length === 0) {
+        container.innerHTML = '<div class="no-activity">No prompts created yet</div>';
+        return;
+    }
+    
+    // Sort by creation date (newest first) and take first 5
+    const recentPrompts = [...prompts]
+        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+        .slice(0, 5);
+    
+    const activityHtml = recentPrompts.map(prompt => {
+        const timeAgo = getTimeAgo(prompt.createdAt || Date.now());
+        const actionIcon = prompt.verified ? 'check-circle' : 'plus-circle';
+        const actionText = prompt.verified ? 'Verified prompt' : 'Created prompt';
+        
+        return `
+            <div class="activity-item">
+                <div class="activity-icon">
+                    <i class="fas fa-${actionIcon}"></i>
+                </div>
+                <div class="activity-content">
+                    <div class="activity-title">${actionText}: "${prompt.name}"</div>
+                    <div class="activity-time">${timeAgo}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = activityHtml;
+}
+
+function updateCategoryOverview(prompts) {
+    const container = document.getElementById('category-overview');
+    const categories = config.getCategories();
+    
+    if (categories.length === 0) {
+        container.innerHTML = '<div class="no-categories-dashboard">No categories configured</div>';
+        return;
+    }
+    
+    // Count prompts per category
+    const categoryStats = categories.map(category => {
+        const count = prompts.filter(p => p.category === category).length;
+        return { name: category, count, color: getCategoryColor(category) };
+    }).filter(stat => stat.count > 0);
+    
+    if (categoryStats.length === 0) {
+        container.innerHTML = '<div class="no-categories-dashboard">No prompts in any category yet</div>';
+        return;
+    }
+    
+    const statsHtml = categoryStats.map(stat => `
+        <div class="category-stat">
+            <div class="category-stat-info">
+                <div class="category-color" style="background-color: ${stat.color}"></div>
+                <span class="category-stat-name">${stat.name}</span>
+            </div>
+            <div class="category-stat-count">${stat.count}</div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = statsHtml;
+}
+
+function updateTopRatedPrompts(prompts) {
+    const container = document.getElementById('top-rated-prompts');
+    
+    // Filter prompts with ratings and sort by rating (highest first)
+    const ratedPrompts = prompts
+        .filter(p => p.rating && p.rating > 0)
+        .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+        .slice(0, 5);
+    
+    if (ratedPrompts.length === 0) {
+        container.innerHTML = '<div class="no-rated-prompts">No rated prompts yet</div>';
+        return;
+    }
+    
+    const topRatedHtml = ratedPrompts.map(prompt => {
+        const stars = Array(5).fill().map((_, i) => {
+            const filled = i < (prompt.rating || 0);
+            return `<i class="fas fa-star ${filled ? 'filled' : ''}"></i>`;
+        }).join('');
+        
+        return `
+            <div class="top-rated-item">
+                <div class="top-rated-info">
+                    <div class="top-rated-title">${prompt.name}</div>
+                    <div class="top-rated-category">${prompt.category || 'DEFAULT'}</div>
+                </div>
+                <div class="top-rated-rating">
+                    <div class="rating-stars">${stars}</div>
+                    <span class="rating-value">${prompt.rating}/5</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = topRatedHtml;
+}
+
+function showDashboardNotConfigured() {
+    const dashboardSection = document.querySelector('#dashboard .dashboard-section');
+    dashboardSection.innerHTML = `
+        <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+        <div style="text-align: center; padding: 3rem; background: #f8f9fa; border-radius: 12px; margin: 2rem 0;">
+            <i class="fas fa-cog" style="font-size: 3rem; color: #6c757d; margin-bottom: 1rem;"></i>
+            <h3 style="color: #495057; margin-bottom: 1rem;">Configuration Required</h3>
+            <p style="color: #6c757d; margin-bottom: 2rem;">Please configure your GitHub settings to view dashboard analytics.</p>
+            <button onclick="document.getElementById('config-toggle').click()" class="quick-action-btn" style="display: inline-flex;">
+                <i class="fas fa-cog"></i>
+                <span>Configure Now</span>
+            </button>
+        </div>
+    `;
+}
+
+function getCategoryColor(category) {
+    const colors = {
+        'DEFAULT': '#6c757d',
+        'CODING': '#28a745',
+        'WRITING': '#17a2b8',
+        'MARKETING': '#e83e8c',
+        'ANALYSIS': '#6f42c1',
+        'CREATIVE': '#fd7e14',
+        'BUSINESS': '#ffc107',
+        'EDUCATION': '#20c997',
+        'RESEARCH': '#6610f2',
+        'PRODUCTIVITY': '#e74c3c'
+    };
+    return colors[category] || '#667eea';
+}
+
+function getTimeAgo(timestamp) {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    
+    if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    return 'Just now';
+}
+
+// Export functionality
+function exportPrompts() {
+    const prompts = promptManager.getAllPrompts();
+    const categories = config.getCategories();
+    
+    const exportData = {
+        metadata: {
+            exportDate: new Date().toISOString(),
+            version: '1.0',
+            totalPrompts: prompts.length,
+            totalCategories: categories.length
+        },
+        categories: categories,
+        prompts: prompts.map(prompt => ({
+            ...prompt,
+            // Add export timestamp
+            exportedAt: new Date().toISOString()
+        }))
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = `prompt-manager-export-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    promptManager.showStatus('Data exported successfully!', 'success');
+}
+
+// Make functions globally available
+window.switchToTab = switchToTab;
+window.exportPrompts = exportPrompts;
+window.updateDashboard = updateDashboard;
 
 document.head.insertAdjacentHTML('beforeend', additionalStyles);
