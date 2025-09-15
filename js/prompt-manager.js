@@ -63,6 +63,7 @@ class PromptManager {
     formatPromptForDisplay(prompt) {
         const ratingStars = '⭐'.repeat(parseInt(prompt.rating));
         const createdDate = prompt.createdAt ? new Date(prompt.createdAt).toLocaleDateString() : 'Unknown';
+        const promptId = this.generateId(); // Generate unique ID for each prompt card
         
         let attachmentHtml = '';
         if (prompt.attachment) {
@@ -107,18 +108,25 @@ class PromptManager {
         }
 
         return `
-            <div class="prompt-card" data-filename="${prompt.filename}" data-sha="${prompt.sha}">
-                <div class="prompt-header">
-                    <h3 class="prompt-name">${this.escapeHtml(prompt.name)}</h3>
-                    <div class="prompt-rating">${ratingStars}</div>
+            <div class="prompt-card collapsible" data-filename="${prompt.filename}" data-sha="${prompt.sha}">
+                <div class="prompt-header" onclick="promptManager.togglePromptCard('${promptId}')">
+                    <div class="prompt-title-section">
+                        <h3 class="prompt-name">${this.escapeHtml(prompt.name)}</h3>
+                        <div class="prompt-rating">${ratingStars}</div>
+                    </div>
+                    <div class="expand-icon">
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
                 </div>
-                <div class="prompt-text">${this.escapeHtml(prompt.promptText)}</div>
-                ${attachmentHtml}
-                <div class="prompt-meta">
-                    <span class="prompt-date">Created: ${createdDate}</span>
-                    <button class="delete-btn" onclick="promptManager.handleDeletePrompt('${prompt.filename}', '${prompt.sha}')">
-                        <i class="fas fa-trash"></i> Delete
-                    </button>
+                <div class="prompt-content" id="content-${promptId}">
+                    <div class="prompt-text">${this.escapeHtml(prompt.promptText)}</div>
+                    ${attachmentHtml}
+                    <div class="prompt-meta">
+                        <span class="prompt-date">Created: ${createdDate}</span>
+                        <button class="delete-btn" onclick="promptManager.handleDeletePrompt('${prompt.filename}', '${prompt.sha}')">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
@@ -285,6 +293,32 @@ class PromptManager {
         
         const ext = filename.split('.').pop();
         return ext ? ext.toUpperCase() : 'Unknown';
+    }
+
+    // Toggle prompt card expansion
+    togglePromptCard(promptId) {
+        const content = document.getElementById(`content-${promptId}`);
+        const card = content.closest('.prompt-card');
+        const icon = card.querySelector('.expand-icon i');
+        
+        if (card.classList.contains('expanded')) {
+            // Collapse
+            card.classList.remove('expanded');
+            content.style.maxHeight = '0';
+            icon.classList.remove('fa-chevron-up');
+            icon.classList.add('fa-chevron-down');
+        } else {
+            // Expand
+            card.classList.add('expanded');
+            content.style.maxHeight = content.scrollHeight + 'px';
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-up');
+        }
+    }
+
+    // Generate unique ID for prompt cards
+    generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2);
     }
 }
 

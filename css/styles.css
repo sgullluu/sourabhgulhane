@@ -348,6 +348,7 @@ header p {
     padding: 1.5rem;
     border-left: 4px solid #667eea;
     transition: all 0.3s ease;
+    overflow: hidden;
 }
 
 .prompt-card:hover {
@@ -355,11 +356,47 @@ header p {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
+.prompt-card.collapsible .prompt-header {
+    cursor: pointer;
+    margin-bottom: 0;
+    padding-bottom: 0.5rem;
+}
+
+.prompt-card.collapsible .prompt-header:hover {
+    background: rgba(102, 126, 234, 0.05);
+    margin: -0.5rem;
+    padding: 1rem 1rem 1rem 1rem;
+    border-radius: 8px;
+}
+
 .prompt-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     margin-bottom: 1rem;
+}
+
+.prompt-title-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.expand-icon {
+    color: #667eea;
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+}
+
+.prompt-card.expanded .expand-icon {
+    transform: rotate(180deg);
+}
+
+.prompt-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
 }
 
 .prompt-name {
@@ -379,6 +416,7 @@ header p {
     padding: 1rem;
     border-radius: 8px;
     margin-bottom: 1rem;
+    margin-top: 1rem;
     line-height: 1.6;
     white-space: pre-wrap;
     color: #555;
@@ -681,6 +719,31 @@ header p {
     
     .form-group textarea {
         min-height: 120px;
+    }
+    
+    /* Mobile-specific prompt card styles */
+    .prompt-card {
+        padding: 1rem;
+    }
+    
+    .prompt-title-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .prompt-name {
+        font-size: 1.1rem;
+    }
+    
+    .expand-icon {
+        font-size: 1rem;
+    }
+    
+    .prompt-meta {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
     }
 }
 
