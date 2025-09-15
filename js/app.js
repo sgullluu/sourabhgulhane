@@ -8,9 +8,11 @@ let config;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('App initialization started');
     // Initialize managers
     promptManager = new PromptManager();
     config = new Config();
+    console.log('Managers initialized');
 
     // Make promptManager globally available for inline onclick handlers
     window.promptManager = promptManager;
@@ -31,9 +33,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Setup all event listeners
 async function setupEventListeners() {
+    console.log('Setting up event listeners');
     // Configuration toggle
     const configToggle = document.getElementById('config-toggle');
     const configPanel = document.getElementById('config-panel');
+    console.log('Config elements found:', !!configToggle, !!configPanel);
     
     configToggle.addEventListener('click', () => {
         configPanel.classList.toggle('show');

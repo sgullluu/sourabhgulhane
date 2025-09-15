@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Syntax Test</title>
+</head>
+<body>
+    <div id="output"></div>
+    <script type="module">
+        try {
+            import('./js/prompt-manager.js').then(module => {
+                document.getElementById('output').innerHTML = 'PromptManager loaded successfully!';
+                console.log('PromptManager class:', module.default);
+            }).catch(error => {
+                document.getElementById('output').innerHTML = 'Error: ' + error.message;
+                console.error('Import error:', error);
+            });
+        } catch (error) {
+            document.getElementById('output').innerHTML = 'Syntax error: ' + error.message;
+            console.error('Syntax error:', error);
+        }
+    </script>
+</body>
+</html>

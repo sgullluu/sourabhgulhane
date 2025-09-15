@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Test</title>
+    <style>
+        .tab-btn { margin: 10px; padding: 10px; }
+        .active { background: blue; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Navigation Test</h1>
+    
+    <div class="tab-navigation">
+        <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+        <button class="tab-btn" data-tab="add-prompt">Add Prompt</button>
+        <button class="tab-btn" data-tab="saved-prompts">Saved Prompts</button>
+    </div>
+    
+    <div id="output"></div>
+    
+    <script>
+        console.log('Script started');
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOMContentLoaded fired');
+            
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            console.log('Found tab buttons:', tabButtons.length);
+            
+            tabButtons.forEach((button, index) => {
+                console.log(`Setting up button ${index}:`, button);
+                button.addEventListener('click', () => {
+                    const targetTab = button.getAttribute('data-tab');
+                    console.log('Tab clicked:', targetTab);
+                    document.getElementById('output').innerHTML = `Clicked: ${targetTab}`;
+                    
+                    // Remove active class from all buttons
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    // Add active class to clicked button
+                    button.classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
