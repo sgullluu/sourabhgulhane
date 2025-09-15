@@ -47,32 +47,75 @@ class Config {
         return false;
     }
 
-    // Initialize default categories if not already set
+    // Initialize categories - will be loaded from GitHub when needed
     initializeDefaultCategories() {
-        const existingCategories = this.getCategories();
-        if (existingCategories.length === 0) {
-            const defaultCategories = [
-                'DEFAULT', 'CODING', 'WRITING', 'MARKETING', 'ANALYSIS',
-                'CREATIVE', 'BUSINESS', 'EDUCATION', 'RESEARCH', 'PRODUCTIVITY'
-            ];
-            this.saveCategories(defaultCategories);
+        // Categories will now be loaded from GitHub on demand
+        // Keep a local cache for offline access
+        this.categoriesCache = null;
+        this.categoriesLoaded = false;
+    }
+
+    // Get all categories (async method now)
+    async getCategories() {
+        if (!this.isConfigured()) {
+            // If not configured, return cached categories or defaults
+            return this.getCachedCategories();
+        }
+
+        try {
+            // Import GitHubAPI dynamically to avoid circular dependency
+            const { default: GitHubAPI } = await import('../js/github-api.js');
+            const githubAPI = new GitHubAPI();
+            const categories = await githubAPI.fetchCategories();
+            
+            // Cache the categories locally
+            this.setCachedCategories(categories);
+            this.categoriesLoaded = true;
+            
+            return categories;
+        } catch (error) {
+            console.warn('Failed to load categories from GitHub, using cached/default:', error);
+            return this.getCachedCategories();
         }
     }
 
-    // Get all categories
-    getCategories() {
-        const categories = localStorage.getItem('custom-categories');
-        return categories ? JSON.parse(categories) : [];
+    // Get cached categories from localStorage
+    getCachedCategories() {
+        const categories = localStorage.getItem('cached-categories');
+        return categories ? JSON.parse(categories) : [
+            'DEFAULT', 'CODING', 'WRITING', 'MARKETING', 'ANALYSIS',
+            'CREATIVE', 'BUSINESS', 'EDUCATION', 'RESEARCH', 'PRODUCTIVITY'
+        ];
     }
 
-    // Save categories to localStorage
-    saveCategories(categories) {
-        localStorage.setItem('custom-categories', JSON.stringify(categories));
+    // Cache categories locally for offline access
+    setCachedCategories(categories) {
+        localStorage.setItem('cached-categories', JSON.stringify(categories));
+    }
+
+    // Save categories to GitHub
+    async saveCategories(categories) {
+        if (!this.isConfigured()) {
+            throw new Error('GitHub configuration required to save categories');
+        }
+
+        try {
+            const { default: GitHubAPI } = await import('../js/github-api.js');
+            const githubAPI = new GitHubAPI();
+            await githubAPI.saveCategories(categories);
+            
+            // Update local cache
+            this.setCachedCategories(categories);
+            return categories;
+        } catch (error) {
+            console.error('Failed to save categories to GitHub:', error);
+            throw error;
+        }
     }
 
     // Add a new category
-    addCategory(categoryName) {
-        const categories = this.getCategories();
+    async addCategory(categoryName) {
+        const categories = await this.getCategories();
         const upperCaseName = categoryName.toUpperCase().trim();
         
         // Validate category name
@@ -89,13 +132,13 @@ class Config {
         }
         
         categories.push(upperCaseName);
-        this.saveCategories(categories);
+        await this.saveCategories(categories);
         return categories;
     }
 
     // Remove a category
-    removeCategory(categoryName) {
-        const categories = this.getCategories();
+    async removeCategory(categoryName) {
+        const categories = await this.getCategories();
         const upperCaseName = categoryName.toUpperCase().trim();
         
         // Prevent removal of DEFAULT category
@@ -109,8 +152,14 @@ class Config {
         }
         
         categories.splice(index, 1);
-        this.saveCategories(categories);
+        await this.saveCategories(categories);
         return categories;
+    }
+
+    // Force reload categories from GitHub
+    async reloadCategories() {
+        this.categoriesLoaded = false;
+        return await this.getCategories();
     }
 }
 

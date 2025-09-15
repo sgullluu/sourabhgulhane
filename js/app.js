@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.promptManager = promptManager;
 
     // Setup event listeners
-    setupEventListeners();
+    await setupEventListeners();
 
     // Load configuration UI
     loadConfigurationUI();
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // Setup all event listeners
-function setupEventListeners() {
+async function setupEventListeners() {
     // Configuration toggle
     const configToggle = document.getElementById('config-toggle');
     const configPanel = document.getElementById('config-panel');
@@ -86,7 +86,7 @@ function setupEventListeners() {
     setupFilterTabs();
 
     // Category management
-    setupCategoryManagement();
+    await setupCategoryManagement();
 }
 
 // Setup tab navigation functionality
@@ -95,15 +95,15 @@ function setupTabNavigation() {
     const tabPanes = document.querySelectorAll('.tab-pane');
 
     tabButtons.forEach(button => {
-        button.addEventListener('click', () => {
+        button.addEventListener('click', async () => {
             const targetTab = button.getAttribute('data-tab');
-            switchToTab(targetTab);
+            await switchToTab(targetTab);
         });
     });
 }
 
 // Switch to a specific tab
-function switchToTab(targetTab) {
+async function switchToTab(targetTab) {
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabPanes = document.querySelectorAll('.tab-pane');
     
@@ -123,9 +123,9 @@ function switchToTab(targetTab) {
         if (targetTab === 'saved-prompts' && config.isConfigured()) {
             promptManager.refreshPrompts();
             // Ensure category filter is populated
-            populateCategoryFilter();
+            await populateCategoryFilter();
         } else if (targetTab === 'dashboard') {
-            updateDashboard();
+            await updateDashboard();
         }
     }
 }
@@ -171,20 +171,25 @@ function setupAdvancedFilters() {
 }
 
 // Populate category filter dropdown
-function populateCategoryFilter() {
+async function populateCategoryFilter() {
     const categoryFilter = document.getElementById('category-filter');
-    const categories = config.getCategories();
     
-    // Clear existing options except the first one
-    categoryFilter.innerHTML = '<option value="">All Categories</option>';
-    
-    // Add category options
-    categories.forEach(category => {
-        const option = document.createElement('option');
-        option.value = category;
-        option.textContent = category;
-        categoryFilter.appendChild(option);
-    });
+    try {
+        const categories = await config.getCategories();
+        
+        // Clear existing options except the first one
+        categoryFilter.innerHTML = '<option value="">All Categories</option>';
+        
+        // Add category options
+        categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = category;
+            categoryFilter.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error populating category filter:', error);
+    }
 }
 
 // Apply all active filters
@@ -221,10 +226,10 @@ function clearAllFilters() {
 }
 
 // Setup category management
-function setupCategoryManagement() {
+async function setupCategoryManagement() {
     // Load categories on page load
-    loadCategoriesDisplay();
-    populateCategoryDropdown();
+    await loadCategoriesDisplay();
+    await populateCategoryDropdown();
 
     // Add category button
     const addCategoryBtn = document.getElementById('add-category-btn');
@@ -252,20 +257,21 @@ function setupCategoryManagement() {
 }
 
 // Handle adding new category
-function handleAddCategory() {
+async function handleAddCategory() {
     const input = document.getElementById('new-category-input');
     const categoryName = input.value.trim();
-
+    
     if (!categoryName) {
         promptManager.showStatus('Please enter a category name', 'error');
         return;
     }
-
+    
     try {
-        config.addCategory(categoryName);
+        promptManager.showStatus('Adding category...', 'info');
+        await config.addCategory(categoryName);
         input.value = '';
-        loadCategoriesDisplay();
-        populateCategoryDropdown();
+        await loadCategoriesDisplay();
+        await populateCategoryDropdown();
         promptManager.showStatus(`Category "${categoryName}" added successfully!`, 'success');
     } catch (error) {
         promptManager.showStatus(`Error: ${error.message}`, 'error');
@@ -273,15 +279,16 @@ function handleAddCategory() {
 }
 
 // Handle removing category
-function handleRemoveCategory(categoryName) {
+async function handleRemoveCategory(categoryName) {
     if (!confirm(`Are you sure you want to remove the category "${categoryName}"?\n\nNote: Existing prompts with this category will keep their category, but you won't be able to select it for new prompts.`)) {
         return;
     }
 
     try {
-        config.removeCategory(categoryName);
-        loadCategoriesDisplay();
-        populateCategoryDropdown();
+        promptManager.showStatus('Removing category...', 'info');
+        await config.removeCategory(categoryName);
+        await loadCategoriesDisplay();
+        await populateCategoryDropdown();
         promptManager.showStatus(`Category "${categoryName}" removed successfully!`, 'success');
     } catch (error) {
         promptManager.showStatus(`Error: ${error.message}`, 'error');
@@ -289,58 +296,78 @@ function handleRemoveCategory(categoryName) {
 }
 
 // Load and display categories in management panel
-function loadCategoriesDisplay() {
+async function loadCategoriesDisplay() {
     const categoriesList = document.getElementById('categories-list');
-    const categories = config.getCategories();
+    
+    try {
+        const categories = await config.getCategories();
 
-    if (categories.length === 0) {
-        categoriesList.innerHTML = '<p class="no-categories">No categories found.</p>';
-        return;
-    }
+        if (categories.length === 0) {
+            categoriesList.innerHTML = '<p class="no-categories">No categories found.</p>';
+            return;
+        }
 
-    const categoriesHtml = categories.map(category => {
-        const isDefault = category === 'DEFAULT';
-        return `
-            <div class="category-item ${isDefault ? 'default-category' : ''}">
-                <div class="category-info">
-                    <span class="category-name">${category}</span>
-                    ${isDefault ? '<span class="default-badge">Default</span>' : ''}
+        const categoriesHtml = categories.map(category => {
+            const isDefault = category === 'DEFAULT';
+            return `
+                <div class="category-item ${isDefault ? 'default-category' : ''}">
+                    <div class="category-info">
+                        <span class="category-name">${category}</span>
+                        ${isDefault ? '<span class="default-badge">Default</span>' : ''}
+                    </div>
+                    ${!isDefault ? `
+                        <button class="remove-category-btn" onclick="handleRemoveCategory('${category}')" title="Remove category">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ` : ''}
                 </div>
-                ${!isDefault ? `
-                    <button class="remove-category-btn" onclick="handleRemoveCategory('${category}')" title="Remove category">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                ` : ''}
-            </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
 
-    categoriesList.innerHTML = categoriesHtml;
+        categoriesList.innerHTML = categoriesHtml;
+    } catch (error) {
+        categoriesList.innerHTML = '<p class="no-categories">Error loading categories. Please check your GitHub configuration.</p>';
+        console.error('Error loading categories display:', error);
+    }
 }
 
 // Populate category dropdown in add prompt form
-function populateCategoryDropdown() {
+async function populateCategoryDropdown() {
     const categorySelect = document.getElementById('prompt-category');
-    const categories = config.getCategories();
-
-    // Clear existing options
-    categorySelect.innerHTML = '';
-
-    // Add categories as options
-    categories.forEach(category => {
-        const option = document.createElement('option');
-        option.value = category;
-        option.textContent = category;
-        if (category === 'DEFAULT') {
-            option.selected = true;
-        }
-        categorySelect.appendChild(option);
-    });
     
-    // Also update the filter dropdown if it exists
-    const categoryFilterExists = document.getElementById('category-filter');
-    if (categoryFilterExists) {
-        populateCategoryFilter();
+    try {
+        const categories = await config.getCategories();
+
+        // Clear existing options
+        categorySelect.innerHTML = '';
+
+        // Add categories as options
+        categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = category;
+            if (category === 'DEFAULT') {
+                option.selected = true;
+            }
+            categorySelect.appendChild(option);
+        });
+        
+        // Also update the filter dropdown if it exists
+        const categoryFilterExists = document.getElementById('category-filter');
+        if (categoryFilterExists) {
+            await populateCategoryFilter();
+        }
+    } catch (error) {
+        console.error('Error populating category dropdown:', error);
+        // Fallback to default categories
+        const defaultCategories = ['DEFAULT', 'CODING', 'WRITING'];
+        categorySelect.innerHTML = '';
+        defaultCategories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = category;
+            categorySelect.appendChild(option);
+        });
     }
 }
 
@@ -506,7 +533,7 @@ async function handlePromptSubmission(event) {
             await promptManager.refreshPrompts();
             
             // Switch to dashboard to see updated statistics
-            switchToTab('dashboard');
+            await switchToTab('dashboard');
         } else {
             promptManager.showStatus(`Error ${promptManager.editingPrompt ? 'updating' : 'saving'} prompt: ${result.error}`, 'error');
         }
@@ -605,7 +632,7 @@ async function loadInitialPrompts() {
         promptManager.displayPrompts(result.prompts);
         
         // Update dashboard with loaded data
-        updateDashboard();
+        await updateDashboard();
         
         if (result.prompts.length > 0) {
             promptManager.showStatus(`Loaded ${result.prompts.length} prompt(s)`, 'success');
@@ -613,7 +640,7 @@ async function loadInitialPrompts() {
     } else {
         promptManager.showStatus(`Error loading prompts: ${result.error}`, 'error');
         // Show dashboard even if loading failed
-        updateDashboard();
+        await updateDashboard();
     }
 }
 
@@ -693,23 +720,23 @@ const additionalStyles = `
 `;
 
 // Dashboard functionality
-function updateDashboard() {
+async function updateDashboard() {
     if (!config.isConfigured()) {
         showDashboardNotConfigured();
         return;
     }
     
     const prompts = promptManager.getAllPrompts();
-    updateDashboardStats(prompts);
+    await updateDashboardStats(prompts);
     updateRecentActivity(prompts);
-    updateCategoryOverview(prompts);
+    await updateCategoryOverview(prompts);
     updateTopRatedPrompts(prompts);
 }
 
-function updateDashboardStats(prompts) {
+async function updateDashboardStats(prompts) {
     const totalCount = prompts.length;
     const verifiedCount = prompts.filter(p => p.verified).length;
-    const categories = config.getCategories();
+    const categories = await config.getCategories();
     const avgRating = totalCount > 0 
         ? (prompts.reduce((sum, p) => sum + (p.rating || 0), 0) / totalCount).toFixed(1)
         : 0.0;
@@ -754,9 +781,9 @@ function updateRecentActivity(prompts) {
     container.innerHTML = activityHtml;
 }
 
-function updateCategoryOverview(prompts) {
+async function updateCategoryOverview(prompts) {
     const container = document.getElementById('category-overview');
-    const categories = config.getCategories();
+    const categories = await config.getCategories();
     
     if (categories.length === 0) {
         container.innerHTML = '<div class="no-categories-dashboard">No categories configured</div>';
