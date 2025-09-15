@@ -371,6 +371,91 @@ class GitHubAPI {
             reader.readAsDataURL(file);
         });
     }
+
+    // Category management methods
+    async fetchCategories() {
+        try {
+            const response = await fetch(`${this.config.getApiBaseUrl()}/contents/config/categories.json?ref=${this.config.branchName}`, {
+                headers: this.config.getHeaders()
+            });
+
+            if (response.status === 404) {
+                // Categories file doesn't exist, return default categories
+                return this.getDefaultCategories();
+            }
+
+            if (!response.ok) {
+                throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            const content = JSON.parse(atob(data.content));
+            return content.categories || this.getDefaultCategories();
+        } catch (error) {
+            console.warn('Error fetching categories from GitHub, using default:', error);
+            return this.getDefaultCategories();
+        }
+    }
+
+    async saveCategories(categories) {
+        const categoryData = {
+            version: "1.0",
+            lastUpdated: new Date().toISOString(),
+            categories: categories
+        };
+
+        try {
+            // First, try to get the existing file to get its SHA
+            let sha = null;
+            try {
+                const existingResponse = await fetch(`${this.config.getApiBaseUrl()}/contents/config/categories.json?ref=${this.config.branchName}`, {
+                    headers: this.config.getHeaders()
+                });
+                
+                if (existingResponse.ok) {
+                    const existingData = await existingResponse.json();
+                    sha = existingData.sha;
+                }
+            } catch (error) {
+                // File doesn't exist, which is fine for creation
+                console.log('Categories file does not exist, will create new one');
+            }
+
+            const content = btoa(JSON.stringify(categoryData, null, 2));
+            const payload = {
+                message: sha ? 'Update categories configuration' : 'Create categories configuration',
+                content: content,
+                branch: this.config.branchName
+            };
+
+            if (sha) {
+                payload.sha = sha;
+            }
+
+            const response = await fetch(`${this.config.getApiBaseUrl()}/contents/config/categories.json`, {
+                method: 'PUT',
+                headers: this.config.getHeaders(),
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`Failed to save categories: ${errorData.message}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error saving categories to GitHub:', error);
+            throw error;
+        }
+    }
+
+    getDefaultCategories() {
+        return [
+            'DEFAULT', 'CODING', 'WRITING', 'MARKETING', 'ANALYSIS',
+            'CREATIVE', 'BUSINESS', 'EDUCATION', 'RESEARCH', 'PRODUCTIVITY'
+        ];
+    }
 }
 
 export default GitHubAPI;
