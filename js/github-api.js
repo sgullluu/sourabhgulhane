@@ -137,6 +137,46 @@ class GitHubAPI {
         }
     }
 
+    // Update an existing prompt file
+    async updatePrompt(filename, sha, promptData) {
+        if (!this.config.isConfigured()) {
+            throw new Error('GitHub configuration is not set.');
+        }
+
+        const url = `${this.config.getApiBaseUrl()}/contents/${this.config.promptsFolder}/${filename}`;
+
+        // Add updated timestamp
+        const updatedPromptData = {
+            ...promptData,
+            updatedAt: new Date().toISOString()
+        };
+
+        const data = {
+            message: `Update prompt: ${promptData.name}`,
+            content: btoa(JSON.stringify(updatedPromptData, null, 2)),
+            sha: sha,
+            branch: this.config.branchName
+        };
+
+        try {
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: this.config.getHeaders(),
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`Failed to update prompt: ${response.status} ${response.statusText}. ${errorData.message || ''}`);
+            }
+
+            return { success: true, data: await response.json() };
+        } catch (error) {
+            console.error('Error updating prompt:', error);
+            throw error;
+        }
+    }
+
     // Delete a prompt file
     async deletePrompt(filename, sha) {
         if (!this.config.isConfigured()) {

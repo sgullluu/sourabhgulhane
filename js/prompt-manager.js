@@ -105,12 +105,12 @@ class PromptManager {
         }
 
         return `
-            <div class="prompt-card collapsible" data-filename="${prompt.filename}" data-sha="${prompt.sha}">
+            <div class="prompt-card collapsible" data-filename="${prompt.filename}" data-sha="${prompt.sha}" data-verified="${verified}">
                 <div class="prompt-header" onclick="promptManager.togglePromptCard('${promptId}')">
                     <div class="prompt-title-section">
                         <h3 class="prompt-name">${this.escapeHtml(prompt.name)}</h3>
                         <div class="prompt-status">
-                            ${verified ? '<i class="fas fa-check-circle verified-icon" title="Verified"></i>' : ''}
+                            ${verified ? '<i class="fas fa-check-circle verified-icon" title="Verified"></i>' : '<i class="fas fa-clock unverified-icon" title="Unverified"></i>'}
                         </div>
                     </div>
                     <div class="expand-icon">
@@ -118,7 +118,15 @@ class PromptManager {
                     </div>
                 </div>
                 <div class="prompt-content" id="content-${promptId}">
-                    <div class="prompt-text">${this.escapeHtml(prompt.promptText)}</div>
+                    <div class="prompt-actions-top">
+                        <button class="copy-btn" onclick="promptManager.copyPromptText('${promptId}')" title="Copy prompt text">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                        <button class="edit-btn" onclick="promptManager.editPrompt('${prompt.filename}', '${prompt.sha}')" title="Edit prompt">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                    </div>
+                    <div class="prompt-text" id="text-${promptId}">${this.escapeHtml(prompt.promptText)}</div>
                     ${attachmentHtml}
                     <div class="prompt-controls">
                         <div class="rating-control">
@@ -340,117 +348,198 @@ class PromptManager {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
     }
 
-    // Update prompt rating
-    async updateRating(filename, sha, newRating) {
+    // Copy prompt text to clipboard
+    async copyPromptText(promptId) {
+        const textElement = document.getElementById(`text-${promptId}`);
+        if (!textElement) return;
+        
         try {
-            // Find the prompt in our local array
+            await navigator.clipboard.writeText(textElement.textContent);
+            this.showStatus('Prompt text copied to clipboard!', 'success');
+        } catch (error) {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = textElement.textContent;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            this.showStatus('Prompt text copied to clipboard!', 'success');
+        }
+    }
+
+    // Edit prompt functionality
+    editPrompt(filename, sha) {
+        // Find the prompt data
+        const prompt = this.prompts.find(p => p.filename === filename);
+        if (!prompt) {
+            this.showStatus('Prompt not found for editing', 'error');
+            return;
+        }
+
+        // Fill the form with existing data
+        document.getElementById('prompt-name').value = prompt.name;
+        document.getElementById('prompt-text').value = prompt.promptText;
+        
+        // Switch to add prompt tab
+        const addTab = document.querySelector('[data-tab="add-prompt"]');
+        const addPane = document.getElementById('add-prompt');
+        
+        // Remove active from all tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+        
+        // Activate add prompt tab
+        addTab.classList.add('active');
+        addPane.classList.add('active');
+        
+        // Store the editing info (will be used when saving)
+        this.editingPrompt = { filename, sha };
+        
+        // Update form title and button
+        const formTitle = document.querySelector('#add-prompt h2');
+        const submitBtn = document.querySelector('.submit-btn');
+        
+        formTitle.innerHTML = '<i class="fas fa-edit"></i> Edit Prompt';
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Update Prompt';
+        
+        this.showStatus('Prompt loaded for editing', 'info');
+    }
+
+    // Update prompt rating
+    async updateRating(filename, sha, rating) {
+        try {
+            // Find and update the prompt
             const prompt = this.prompts.find(p => p.filename === filename);
-            if (!prompt) {
-                this.showStatus('Prompt not found', 'error');
-                return;
-            }
-
-            // Update the rating
-            prompt.rating = newRating;
+            if (!prompt) return;
+            
+            prompt.rating = rating;
             prompt.updatedAt = new Date().toISOString();
-
+            
             // Save to GitHub
-            const result = await this.updatePromptFile(filename, sha, prompt);
+            const result = await this.githubAPI.updatePrompt(filename, sha, prompt);
+            
             if (result.success) {
-                this.showStatus('Rating updated successfully!', 'success');
-                // Update the visual stars
-                this.updateStarsVisual(filename, newRating);
-            } else {
-                this.showStatus(`Error updating rating: ${result.error}`, 'error');
+                // Update the display
+                const starContainer = document.querySelector(`[data-filename="${filename}"] .star-rating`);
+                if (starContainer) {
+                    const stars = starContainer.querySelectorAll('.fa-star');
+                    stars.forEach((star, index) => {
+                        if (index < rating) {
+                            star.classList.add('active');
+                        } else {
+                            star.classList.remove('active');
+                        }
+                    });
+                }
+                this.showStatus(`Rating updated to ${rating} star${rating > 1 ? 's' : ''}`, 'success');
             }
         } catch (error) {
-            this.showStatus(`Error updating rating: ${error.message}`, 'error');
+            this.showStatus('Error updating rating', 'error');
         }
     }
 
     // Update prompt verification status
     async updateVerification(filename, sha, verified) {
         try {
-            // Find the prompt in our local array
+            // Find and update the prompt
             const prompt = this.prompts.find(p => p.filename === filename);
-            if (!prompt) {
-                this.showStatus('Prompt not found', 'error');
-                return;
-            }
-
-            // Update the verification status
+            if (!prompt) return;
+            
             prompt.verified = verified;
             prompt.updatedAt = new Date().toISOString();
-
-            // Save to GitHub
-            const result = await this.updatePromptFile(filename, sha, prompt);
-            if (result.success) {
-                this.showStatus(`Prompt ${verified ? 'verified' : 'unverified'} successfully!`, 'success');
-                // Update the visual verification icon
-                this.updateVerificationVisual(filename, verified);
-            } else {
-                this.showStatus(`Error updating verification: ${result.error}`, 'error');
-            }
-        } catch (error) {
-            this.showStatus(`Error updating verification: ${error.message}`, 'error');
-        }
-    }
-
-    // Update prompt file on GitHub
-    async updatePromptFile(filename, sha, promptData) {
-        try {
-            const url = `${this.githubAPI.config.getApiBaseUrl()}/contents/${this.githubAPI.config.promptsFolder}/${filename}`;
             
-            const data = {
-                message: `Update prompt: ${promptData.name}`,
-                content: btoa(JSON.stringify(promptData, null, 2)),
-                sha: sha,
-                branch: this.githubAPI.config.branchName
-            };
-
-            const response = await fetch(url, {
-                method: 'PUT',
-                headers: this.githubAPI.config.getHeaders(),
-                body: JSON.stringify(data)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(`Failed to update prompt: ${response.status} ${response.statusText}. ${errorData.message || ''}`);
-            }
-
-            return { success: true, data: await response.json() };
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
-    }
-
-    // Update stars visual display
-    updateStarsVisual(filename, rating) {
-        const starContainer = document.querySelector(`[data-filename="${filename}"] .star-rating`);
-        if (starContainer) {
-            const stars = starContainer.querySelectorAll('.fas.fa-star');
-            stars.forEach((star, index) => {
-                if (index < rating) {
-                    star.classList.add('active');
-                } else {
-                    star.classList.remove('active');
+            // Save to GitHub
+            const result = await this.githubAPI.updatePrompt(filename, sha, prompt);
+            
+            if (result.success) {
+                // Update the card's data attribute
+                const card = document.querySelector(`[data-filename="${filename}"]`);
+                if (card) {
+                    card.setAttribute('data-verified', verified);
+                    
+                    // Update the status icon
+                    const statusIcon = card.querySelector('.prompt-status i');
+                    if (statusIcon) {
+                        statusIcon.className = verified ? 
+                            'fas fa-check-circle verified-icon' : 
+                            'fas fa-clock unverified-icon';
+                        statusIcon.title = verified ? 'Verified' : 'Unverified';
+                    }
                 }
-            });
+                
+                this.showStatus(`Prompt ${verified ? 'verified' : 'unverified'}`, 'success');
+                
+                // Refresh display if we're filtering
+                const activeFilter = document.querySelector('.filter-tab.active');
+                if (activeFilter) {
+                    const filter = activeFilter.getAttribute('data-filter');
+                    if (filter !== 'all') {
+                        this.filterPrompts(filter);
+                    }
+                }
+            }
+        } catch (error) {
+            this.showStatus('Error updating verification status', 'error');
         }
     }
 
-    // Update verification visual display
-    updateVerificationVisual(filename, verified) {
-        const card = document.querySelector(`[data-filename="${filename}"]`);
-        if (card) {
-            const statusDiv = card.querySelector('.prompt-status');
-            if (verified) {
-                statusDiv.innerHTML = '<i class="fas fa-check-circle verified-icon" title="Verified"></i>';
-            } else {
-                statusDiv.innerHTML = '';
+    // Filter prompts by verification status
+    filterPrompts(filter) {
+        const cards = document.querySelectorAll('.prompt-card');
+        
+        cards.forEach(card => {
+            const verified = card.getAttribute('data-verified') === 'true';
+            let show = false;
+            
+            switch(filter) {
+                case 'all':
+                    show = true;
+                    break;
+                case 'verified':
+                    show = verified;
+                    break;
+                case 'unverified':
+                    show = !verified;
+                    break;
+            }
+            
+            card.style.display = show ? 'block' : 'none';
+        });
+        
+        // Update counts
+        const visibleCards = document.querySelectorAll('.prompt-card[style="display: block;"], .prompt-card:not([style*="display: none"])').length;
+        const container = document.getElementById('prompts-container');
+        
+        if (visibleCards === 0 && cards.length > 0) {
+            const noResults = document.querySelector('.no-results') || document.createElement('div');
+            noResults.className = 'no-results';
+            noResults.innerHTML = `
+                <div class="no-prompts">
+                    <i class="fas fa-search"></i>
+                    <p>No ${filter} prompts found.</p>
+                </div>
+            `;
+            if (!document.querySelector('.no-results')) {
+                container.appendChild(noResults);
+            }
+        } else {
+            const noResults = document.querySelector('.no-results');
+            if (noResults) {
+                noResults.remove();
             }
         }
+    }
+
+    // Reset form to add mode
+    resetToAddMode() {
+        this.editingPrompt = null;
+        
+        const formTitle = document.querySelector('#add-prompt h2');
+        const submitBtn = document.querySelector('.submit-btn');
+        
+        formTitle.innerHTML = '<i class="fas fa-plus-circle"></i> Add New Prompt';
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Prompt';
     }
 }
 

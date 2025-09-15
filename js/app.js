@@ -69,6 +69,9 @@ function setupEventListeners() {
 
     // Tab navigation
     setupTabNavigation();
+
+    // Filter tabs for saved prompts
+    setupFilterTabs();
 }
 
 // Setup tab navigation functionality
@@ -106,6 +109,26 @@ function switchToTab(targetTab) {
             promptManager.refreshPrompts();
         }
     }
+}
+
+// Setup filter tabs for saved prompts
+function setupFilterTabs() {
+    const filterButtons = document.querySelectorAll('.filter-tab');
+    
+    filterButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const filter = button.getAttribute('data-filter');
+            
+            // Remove active class from all filter buttons
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Add active class to clicked button
+            button.classList.add('active');
+            
+            // Filter prompts based on selection
+            promptManager.filterPrompts(filter);
+        });
+    });
 }
 
 // Load existing configuration into the UI
@@ -213,16 +236,37 @@ async function handlePromptSubmission(event) {
         const promptData = {
             name,
             promptText,
-            rating: 0, // Default rating, will be set in saved prompts
-            verified: false, // Default verification status
+            rating: null, // Will be set later in saved prompts
+            verified: false, // Default to unverified
             attachment
         };
 
-        // Save to GitHub
-        const result = await promptManager.savePrompt(promptData);
+        // Check if we're editing an existing prompt
+        let result;
+        if (promptManager.editingPrompt) {
+            // Update existing prompt
+            const existingPrompt = promptManager.prompts.find(p => p.filename === promptManager.editingPrompt.filename);
+            if (existingPrompt) {
+                // Preserve existing rating and verification status
+                promptData.rating = existingPrompt.rating;
+                promptData.verified = existingPrompt.verified;
+                promptData.id = existingPrompt.id;
+                promptData.createdAt = existingPrompt.createdAt;
+            }
+            
+            result = await promptManager.githubAPI.updatePrompt(
+                promptManager.editingPrompt.filename, 
+                promptManager.editingPrompt.sha, 
+                promptData
+            );
+        } else {
+            // Save new prompt
+            result = await promptManager.savePrompt(promptData);
+        }
 
         if (result.success) {
-            promptManager.showStatus('Prompt saved successfully!', 'success');
+            const isEditing = promptManager.editingPrompt !== null;
+            promptManager.showStatus(`Prompt ${isEditing ? 'updated' : 'saved'} successfully!`, 'success');
             
             // Reset form
             document.getElementById('prompt-form').reset();
@@ -233,13 +277,16 @@ async function handlePromptSubmission(event) {
                 existingPreview.remove();
             }
             
+            // Reset to add mode
+            promptManager.resetToAddMode();
+            
             // Refresh prompts display
             await promptManager.refreshPrompts();
             
             // Switch to saved prompts tab
             switchToTab('saved-prompts');
         } else {
-            promptManager.showStatus(`Error saving prompt: ${result.error}`, 'error');
+            promptManager.showStatus(`Error ${promptManager.editingPrompt ? 'updating' : 'saving'} prompt: ${result.error}`, 'error');
         }
 
     } catch (error) {

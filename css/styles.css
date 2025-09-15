@@ -837,17 +837,6 @@ header p {
         gap: 1rem;
         align-items: stretch;
     }
-    
-    .prompt-controls {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: stretch;
-    }
-    
-    .rating-control,
-    .verify-control {
-        justify-content: center;
-    }
 }
 
 /* Tablet styles */
@@ -855,6 +844,209 @@ header p {
     .tab-navigation {
         max-width: 600px;
         margin: 0 auto 2rem auto;
+    }
+}
+
+/* Prompt Filter Tabs */
+.prompt-filter-tabs {
+    display: flex;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 6px;
+    margin-bottom: 1.5rem;
+    gap: 6px;
+}
+
+.filter-tab {
+    flex: 1;
+    background: transparent;
+    color: rgba(102, 126, 234, 0.8);
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.filter-tab:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+}
+
+.filter-tab.active {
+    background: #667eea;
+    color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* Prompt Status Icons */
+.verified-icon {
+    color: #28a745;
+}
+
+.unverified-icon {
+    color: #ffc107;
+}
+
+/* Prompt Actions */
+.prompt-actions-top {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    justify-content: flex-end;
+}
+
+.copy-btn, .edit-btn {
+    background: transparent;
+    border: 1px solid #667eea;
+    color: #667eea;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.copy-btn:hover {
+    background: #667eea;
+    color: white;
+}
+
+.edit-btn:hover {
+    background: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+/* Prompt Controls */
+.prompt-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 8px;
+    margin: 1rem 0;
+    gap: 1rem;
+}
+
+.rating-control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.rating-control label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #555;
+}
+
+.star-rating {
+    display: flex;
+    gap: 2px;
+}
+
+.star-rating .fa-star {
+    cursor: pointer;
+    color: #ddd;
+    font-size: 1.1rem;
+    transition: all 0.2s ease;
+}
+
+.star-rating .fa-star:hover,
+.star-rating .fa-star.active {
+    color: #ffc107;
+}
+
+.star-rating .fa-star:hover {
+    transform: scale(1.1);
+}
+
+.verify-control {
+    display: flex;
+    align-items: center;
+}
+
+.verify-checkbox {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #555;
+    gap: 0.5rem;
+}
+
+.verify-checkbox input[type="checkbox"] {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #667eea;
+    border-radius: 3px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.verify-checkbox input[type="checkbox"]:checked {
+    background: #28a745;
+    border-color: #28a745;
+}
+
+.verify-checkbox input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: -2px;
+    left: 2px;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Mobile styles for new components */
+@media (max-width: 768px) {
+    .prompt-filter-tabs {
+        flex-direction: column;
+        gap: 4px;
+        padding: 4px;
+    }
+    
+    .filter-tab {
+        padding: 12px 16px;
+        font-size: 0.9rem;
+    }
+    
+    .prompt-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .rating-control,
+    .verify-control {
+        justify-content: center;
+    }
+    
+    .prompt-actions-top {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .copy-btn, .edit-btn {
+        flex: 1;
+        min-width: 120px;
+        justify-content: center;
     }
 }
 
