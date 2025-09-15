@@ -47,6 +47,10 @@ function setupEventListeners() {
     const promptForm = document.getElementById('prompt-form');
     promptForm.addEventListener('submit', handlePromptSubmission);
 
+    // File attachment preview
+    const fileInput = document.getElementById('prompt-attachment');
+    fileInput.addEventListener('change', handleFileSelection);
+
     // Refresh prompts button
     const refreshBtn = document.getElementById('refresh-prompts');
     refreshBtn.addEventListener('click', () => {
@@ -62,6 +66,46 @@ function setupEventListeners() {
             }
         });
     });
+
+    // Tab navigation
+    setupTabNavigation();
+}
+
+// Setup tab navigation functionality
+function setupTabNavigation() {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const targetTab = button.getAttribute('data-tab');
+            switchToTab(targetTab);
+        });
+    });
+}
+
+// Switch to a specific tab
+function switchToTab(targetTab) {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    
+    // Remove active class from all buttons and panes
+    tabButtons.forEach(btn => btn.classList.remove('active'));
+    tabPanes.forEach(pane => pane.classList.remove('active'));
+    
+    // Add active class to target button and pane
+    const targetButton = document.querySelector(`[data-tab="${targetTab}"]`);
+    const targetPane = document.getElementById(targetTab);
+    
+    if (targetButton && targetPane) {
+        targetButton.classList.add('active');
+        targetPane.classList.add('active');
+        
+        // If switching to saved prompts tab, refresh the prompts
+        if (targetTab === 'saved-prompts' && config.isConfigured()) {
+            promptManager.refreshPrompts();
+        }
+    }
 }
 
 // Load existing configuration into the UI
@@ -183,8 +227,17 @@ async function handlePromptSubmission(event) {
             // Reset form
             document.getElementById('prompt-form').reset();
             
+            // Remove file preview if exists
+            const existingPreview = document.querySelector('.attachment-preview-form');
+            if (existingPreview) {
+                existingPreview.remove();
+            }
+            
             // Refresh prompts display
             await promptManager.refreshPrompts();
+            
+            // Switch to saved prompts tab
+            switchToTab('saved-prompts');
         } else {
             promptManager.showStatus(`Error saving prompt: ${result.error}`, 'error');
         }
@@ -193,6 +246,82 @@ async function handlePromptSubmission(event) {
         console.error('Error submitting prompt:', error);
         promptManager.showStatus(`Unexpected error: ${error.message}`, 'error');
     }
+}
+
+// Handle file selection and preview
+function handleFileSelection(event) {
+    const file = event.target.files[0];
+    const existingPreview = document.querySelector('.attachment-preview-form');
+    
+    // Remove existing preview
+    if (existingPreview) {
+        existingPreview.remove();
+    }
+    
+    if (!file) return;
+    
+    // Check file size (limit to 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+        promptManager.showStatus('File size too large. Maximum size is 10MB.', 'error');
+        event.target.value = '';
+        return;
+    }
+    
+    // Create preview container
+    const preview = document.createElement('div');
+    preview.className = 'attachment-preview-form';
+    preview.style.marginTop = '1rem';
+    preview.style.padding = '1rem';
+    preview.style.border = '1px solid #e1e5e9';
+    preview.style.borderRadius = '8px';
+    preview.style.background = '#f8f9fa';
+    
+    const isImage = file.type.startsWith('image/');
+    
+    if (isImage) {
+        // Image preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.innerHTML = `
+                <div class="preview-header">
+                    <i class="fas fa-image"></i>
+                    <strong>${file.name}</strong>
+                    <span class="file-size">${formatFileSize(file.size)}</span>
+                </div>
+                <div class="image-preview" style="text-align: center; margin-top: 0.5rem;">
+                    <img src="${e.target.result}" alt="${file.name}" style="max-width: 100%; max-height: 200px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                </div>
+            `;
+        };
+        reader.readAsDataURL(file);
+    } else {
+        // File preview
+        preview.innerHTML = `
+            <div class="preview-header">
+                <i class="fas fa-paperclip"></i>
+                <strong>${file.name}</strong>
+                <span class="file-size">${formatFileSize(file.size)}</span>
+                <span class="file-type">${getFileExtension(file.name)}</span>
+            </div>
+        `;
+    }
+    
+    // Insert preview after the file input
+    event.target.parentNode.appendChild(preview);
+}
+
+// Helper functions for file handling
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function getFileExtension(filename) {
+    return filename.split('.').pop().toUpperCase();
 }
 
 // Load initial prompts

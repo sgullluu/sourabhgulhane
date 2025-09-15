@@ -64,13 +64,47 @@ class PromptManager {
         const ratingStars = '⭐'.repeat(parseInt(prompt.rating));
         const createdDate = prompt.createdAt ? new Date(prompt.createdAt).toLocaleDateString() : 'Unknown';
         
-        const attachmentHtml = prompt.attachment ? 
-            `<div class="prompt-attachment">
-                <i class="fas fa-paperclip"></i>
-                <a href="${prompt.attachment.data}" download="${prompt.attachment.name}" target="_blank">
-                    ${prompt.attachment.name}
-                </a>
-            </div>` : '';
+        let attachmentHtml = '';
+        if (prompt.attachment) {
+            const isImage = this.isImageFile(prompt.attachment.type || prompt.attachment.name);
+            
+            if (isImage) {
+                attachmentHtml = `
+                    <div class="prompt-attachment image-attachment">
+                        <div class="attachment-header">
+                            <i class="fas fa-image"></i>
+                            <span>${prompt.attachment.name}</span>
+                        </div>
+                        <div class="attachment-preview">
+                            <img src="${prompt.attachment.data}" alt="${prompt.attachment.name}" onclick="this.requestFullscreen()" style="cursor: pointer;" title="Click to view fullscreen">
+                        </div>
+                        <div class="attachment-actions">
+                            <a href="${prompt.attachment.data}" download="${prompt.attachment.name}" class="download-link">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                        </div>
+                    </div>
+                `;
+            } else {
+                attachmentHtml = `
+                    <div class="prompt-attachment file-attachment">
+                        <div class="attachment-header">
+                            <i class="fas fa-paperclip"></i>
+                            <span>${prompt.attachment.name}</span>
+                        </div>
+                        <div class="file-details">
+                            <span class="file-size">${this.formatFileSize(prompt.attachment.size)}</span>
+                            <span class="file-type">${this.getFileExtension(prompt.attachment.name)}</span>
+                        </div>
+                        <div class="attachment-actions">
+                            <a href="${prompt.attachment.data}" download="${prompt.attachment.name}" target="_blank" class="download-link">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }
+        }
 
         return `
             <div class="prompt-card" data-filename="${prompt.filename}" data-sha="${prompt.sha}">
@@ -227,6 +261,30 @@ class PromptManager {
         } catch (error) {
             return { success: false, error: error.message };
         }
+    }
+
+    // Check if a file is an image
+    isImageFile(type) {
+        return type && type.startsWith('image/');
+    }
+
+    // Format file size for display
+    formatFileSize(bytes) {
+        if (!bytes) return 'Unknown size';
+        
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        if (bytes === 0) return '0 Bytes';
+        
+        const i = Math.floor(Math.log(bytes) / Math.log(1024));
+        return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    // Get file extension
+    getFileExtension(filename) {
+        if (!filename) return 'Unknown';
+        
+        const ext = filename.split('.').pop();
+        return ext ? ext.toUpperCase() : 'Unknown';
     }
 }
 
