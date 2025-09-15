@@ -212,6 +212,7 @@ async function handlePromptSubmission(event) {
     // Get form data
     const name = document.getElementById('prompt-name').value.trim();
     const promptText = document.getElementById('prompt-text').value.trim();
+    const category = document.getElementById('prompt-category').value || 'DEFAULT';
     const attachmentFile = document.getElementById('prompt-attachment').files[0];
 
     // Validate form data
@@ -236,6 +237,7 @@ async function handlePromptSubmission(event) {
         const promptData = {
             name,
             promptText,
+            category,
             rating: null, // Will be set later in saved prompts
             verified: false, // Default to unverified
             attachment

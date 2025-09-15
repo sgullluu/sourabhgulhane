@@ -66,10 +66,28 @@
                                 <textarea id="prompt-text" required placeholder="Enter your prompt here..." rows="6"></textarea>
                             </div>
                             
-                            <div class="form-group">
-                                <label for="prompt-attachment"><i class="fas fa-paperclip"></i> Attachment (optional):</label>
-                                <input type="file" id="prompt-attachment" accept=".txt,.md,.json,.pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.bmp,.webp,.svg" capture="environment">
-                                <small class="file-info">Supports documents, images, and files up to 10MB</small>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="prompt-category"><i class="fas fa-folder"></i> Category:</label>
+                                    <select id="prompt-category">
+                                        <option value="DEFAULT">DEFAULT</option>
+                                        <option value="CODING">CODING</option>
+                                        <option value="WRITING">WRITING</option>
+                                        <option value="MARKETING">MARKETING</option>
+                                        <option value="ANALYSIS">ANALYSIS</option>
+                                        <option value="CREATIVE">CREATIVE</option>
+                                        <option value="BUSINESS">BUSINESS</option>
+                                        <option value="EDUCATION">EDUCATION</option>
+                                        <option value="RESEARCH">RESEARCH</option>
+                                        <option value="PRODUCTIVITY">PRODUCTIVITY</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="prompt-attachment"><i class="fas fa-paperclip"></i> Attachment (optional):</label>
+                                    <input type="file" id="prompt-attachment" accept=".txt,.md,.json,.pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.bmp,.webp,.svg" capture="environment">
+                                    <small class="file-info">Supports documents, images, and files up to 10MB</small>
+                                </div>
                             </div>
                             
                             <button type="submit" class="submit-btn">

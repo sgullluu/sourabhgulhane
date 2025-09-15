@@ -1014,6 +1014,107 @@ header p {
     font-weight: bold;
 }
 
+/* Category Styles */
+.category-section {
+    margin-bottom: 2rem;
+}
+
+.category-header {
+    margin-bottom: 1rem;
+}
+
+.category-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+}
+
+.category-title i {
+    color: #667eea;
+    font-size: 1.2rem;
+}
+
+.category-count {
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: normal;
+    margin-left: auto;
+}
+
+.category-prompts {
+    display: grid;
+    gap: 1rem;
+    padding-left: 1rem;
+}
+
+.prompt-category-badge {
+    background: #667eea;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.prompt-title-section {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+    flex-wrap: wrap;
+}
+
+.prompt-name {
+    font-size: 1.2rem;
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+}
+
+/* Category Colors */
+.prompt-category-badge {
+    background: #667eea;
+}
+
+.category-section:nth-child(2n) .prompt-category-badge {
+    background: #28a745;
+}
+
+.category-section:nth-child(3n) .prompt-category-badge {
+    background: #dc3545;
+}
+
+.category-section:nth-child(4n) .prompt-category-badge {
+    background: #ffc107;
+    color: #333;
+}
+
+.category-section:nth-child(5n) .prompt-category-badge {
+    background: #17a2b8;
+}
+
+.category-section:nth-child(6n) .prompt-category-badge {
+    background: #6f42c1;
+}
+
+.category-section:nth-child(7n) .prompt-category-badge {
+    background: #fd7e14;
+}
+
+.category-section:nth-child(8n) .prompt-category-badge {
+    background: #20c997;
+}
+
 /* Mobile styles for new components */
 @media (max-width: 768px) {
     .prompt-filter-tabs {
@@ -1047,6 +1148,26 @@ header p {
         flex: 1;
         min-width: 120px;
         justify-content: center;
+    }
+    
+    .category-title {
+        font-size: 1.2rem;
+        padding: 0.5rem 0.75rem;
+        flex-wrap: wrap;
+    }
+    
+    .category-prompts {
+        padding-left: 0.5rem;
+    }
+    
+    .prompt-title-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .prompt-category-badge {
+        align-self: flex-start;
     }
 }
 

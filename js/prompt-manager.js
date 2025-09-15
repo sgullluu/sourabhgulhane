@@ -108,6 +108,7 @@ class PromptManager {
             <div class="prompt-card collapsible" data-filename="${prompt.filename}" data-sha="${prompt.sha}" data-verified="${verified}">
                 <div class="prompt-header" onclick="promptManager.togglePromptCard('${promptId}')">
                     <div class="prompt-title-section">
+                        <div class="prompt-category-badge">${prompt.category || 'DEFAULT'}</div>
                         <h3 class="prompt-name">${this.escapeHtml(prompt.name)}</h3>
                         <div class="prompt-status">
                             ${verified ? '<i class="fas fa-check-circle verified-icon" title="Verified"></i>' : '<i class="fas fa-clock unverified-icon" title="Unverified"></i>'}
@@ -176,22 +177,84 @@ class PromptManager {
             return;
         }
 
-        // Sort prompts by creation date (newest first)
-        const sortedPrompts = prompts.sort((a, b) => {
-            const dateA = new Date(a.createdAt || 0);
-            const dateB = new Date(b.createdAt || 0);
-            return dateB - dateA;
-        });
-
-        console.log('Sorted prompts:', sortedPrompts);
+        // Group prompts by category
+        const groupedPrompts = this.groupPromptsByCategory(prompts);
+        console.log('Grouped prompts:', groupedPrompts);
         
-        const htmlContent = sortedPrompts
-            .map(prompt => this.formatPromptForDisplay(prompt))
-            .join('');
+        // Create HTML for each category group
+        let htmlContent = '';
+        
+        // Sort categories: DEFAULT first, then alphabetically
+        const sortedCategories = Object.keys(groupedPrompts).sort((a, b) => {
+            if (a === 'DEFAULT') return -1;
+            if (b === 'DEFAULT') return 1;
+            return a.localeCompare(b);
+        });
+        
+        sortedCategories.forEach(category => {
+            const categoryPrompts = groupedPrompts[category];
+            const categoryIcon = this.getCategoryIcon(category);
+            
+            htmlContent += `
+                <div class="category-section">
+                    <div class="category-header">
+                        <h3 class="category-title">
+                            <i class="${categoryIcon}"></i>
+                            ${category}
+                            <span class="category-count">(${categoryPrompts.length})</span>
+                        </h3>
+                    </div>
+                    <div class="category-prompts">
+                        ${categoryPrompts.map(prompt => this.formatPromptForDisplay(prompt)).join('')}
+                    </div>
+                </div>
+            `;
+        });
         
         console.log('Generated HTML:', htmlContent);
         container.innerHTML = htmlContent;
         console.log('Updated container innerHTML');
+    }
+
+    // Group prompts by category
+    groupPromptsByCategory(prompts) {
+        const grouped = {};
+        
+        prompts.forEach(prompt => {
+            const category = prompt.category || 'DEFAULT';
+            if (!grouped[category]) {
+                grouped[category] = [];
+            }
+            grouped[category].push(prompt);
+        });
+        
+        // Sort prompts within each category by creation date (newest first)
+        Object.keys(grouped).forEach(category => {
+            grouped[category].sort((a, b) => {
+                const dateA = new Date(a.createdAt || 0);
+                const dateB = new Date(b.createdAt || 0);
+                return dateB - dateA;
+            });
+        });
+        
+        return grouped;
+    }
+
+    // Get icon for category
+    getCategoryIcon(category) {
+        const icons = {
+            'DEFAULT': 'fas fa-folder',
+            'CODING': 'fas fa-code',
+            'WRITING': 'fas fa-pen',
+            'MARKETING': 'fas fa-bullhorn',
+            'ANALYSIS': 'fas fa-chart-line',
+            'CREATIVE': 'fas fa-palette',
+            'BUSINESS': 'fas fa-briefcase',
+            'EDUCATION': 'fas fa-graduation-cap',
+            'RESEARCH': 'fas fa-search',
+            'PRODUCTIVITY': 'fas fa-tasks'
+        };
+        return icons[category] || 'fas fa-folder';
     }
 
     // Handle prompt deletion
@@ -380,6 +443,7 @@ class PromptManager {
         // Fill the form with existing data
         document.getElementById('prompt-name').value = prompt.name;
         document.getElementById('prompt-text').value = prompt.promptText;
+        document.getElementById('prompt-category').value = prompt.category || 'DEFAULT';
         
         // Switch to add prompt tab
         const addTab = document.querySelector('[data-tab="add-prompt"]');
@@ -487,6 +551,7 @@ class PromptManager {
     // Filter prompts by verification status
     filterPrompts(filter) {
         const cards = document.querySelectorAll('.prompt-card');
+        const categorySections = document.querySelectorAll('.category-section');
         
         cards.forEach(card => {
             const verified = card.getAttribute('data-verified') === 'true';
@@ -507,7 +572,13 @@ class PromptManager {
             card.style.display = show ? 'block' : 'none';
         });
         
-        // Update counts
+        // Hide empty category sections
+        categorySections.forEach(section => {
+            const visibleCardsInCategory = section.querySelectorAll('.prompt-card[style="display: block;"], .prompt-card:not([style*="display: none"])');
+            section.style.display = visibleCardsInCategory.length > 0 ? 'block' : 'none';
+        });
+        
+        // Update counts and show no results if needed
         const visibleCards = document.querySelectorAll('.prompt-card[style="display: block;"], .prompt-card:not([style*="display: none"])').length;
         const container = document.getElementById('prompts-container');
         
