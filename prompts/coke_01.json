@@ -2,10 +2,12 @@
   "name": "coke",
   "promptText": "coke",
   "category": "DEFAULT",
-  "rating": null,
+  "rating": 4,
   "verified": false,
   "attachment": null,
   "id": "mfkven3pzz5jmnndps7",
   "createdAt": "2025-09-15T08:36:59.893Z",
-  "updatedAt": "2025-09-15T08:36:59.893Z"
+  "updatedAt": "2025-09-15T08:59:55.736Z",
+  "filename": "coke_01.json",
+  "sha": "5c3efe4528d18afd6ad0cbf0611a7d95bb683530"
 }
