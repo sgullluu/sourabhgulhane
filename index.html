@@ -15,9 +15,15 @@
         </header>
 
         <div class="config-section">
-            <button id="config-toggle" class="config-btn">
-                <i class="fas fa-cog"></i> Configuration
-            </button>
+            <div class="config-buttons">
+                <button id="config-toggle" class="config-btn">
+                    <i class="fas fa-cog"></i> Configuration
+                </button>
+                <button id="category-toggle" class="config-btn category-btn">
+                    <i class="fas fa-tags"></i> Manage Categories
+                </button>
+            </div>
+            
             <div id="config-panel" class="config-panel">
                 <h3>GitHub Configuration</h3>
                 <div class="config-form">
@@ -34,6 +40,29 @@
                         <li>Enter your GitHub username and repository name</li>
                         <li>Make sure your repository has a 'prompts' folder</li>
                     </ol>
+                </div>
+            </div>
+
+            <div id="category-panel" class="config-panel">
+                <h3>Manage Categories</h3>
+                <div class="category-management">
+                    <div class="add-category-section">
+                        <h4>Add New Category</h4>
+                        <div class="add-category-form">
+                            <input type="text" id="new-category-input" placeholder="Category name (max 3 words, capitals)" maxlength="20">
+                            <button id="add-category-btn">
+                                <i class="fas fa-plus"></i> Add Category
+                            </button>
+                        </div>
+                        <small class="category-help">Enter up to 3 words in CAPITAL LETTERS (e.g., AI TOOLS, DATA SCIENCE)</small>
+                    </div>
+                    
+                    <div class="existing-categories-section">
+                        <h4>Existing Categories</h4>
+                        <div id="categories-list" class="categories-list">
+                            <!-- Categories will be dynamically loaded here -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

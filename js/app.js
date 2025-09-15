@@ -37,6 +37,18 @@ function setupEventListeners() {
     
     configToggle.addEventListener('click', () => {
         configPanel.classList.toggle('show');
+        // Hide category panel if open
+        document.getElementById('category-panel').classList.remove('show');
+    });
+
+    // Category management toggle
+    const categoryToggle = document.getElementById('category-toggle');
+    const categoryPanel = document.getElementById('category-panel');
+    
+    categoryToggle.addEventListener('click', () => {
+        categoryPanel.classList.toggle('show');
+        // Hide config panel if open
+        configPanel.classList.remove('show');
     });
 
     // Save configuration
@@ -72,6 +84,9 @@ function setupEventListeners() {
 
     // Filter tabs for saved prompts
     setupFilterTabs();
+
+    // Category management
+    setupCategoryManagement();
 }
 
 // Setup tab navigation functionality
@@ -131,6 +146,127 @@ function setupFilterTabs() {
     });
 }
 
+// Setup category management
+function setupCategoryManagement() {
+    // Load categories on page load
+    loadCategoriesDisplay();
+    populateCategoryDropdown();
+
+    // Add category button
+    const addCategoryBtn = document.getElementById('add-category-btn');
+    addCategoryBtn.addEventListener('click', handleAddCategory);
+
+    // Enter key support for adding categories
+    const categoryInput = document.getElementById('new-category-input');
+    categoryInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleAddCategory();
+        }
+    });
+
+    // Input validation
+    categoryInput.addEventListener('input', (e) => {
+        let value = e.target.value.toUpperCase();
+        // Only allow letters, spaces, and limit to 3 words
+        value = value.replace(/[^A-Z\s]/g, '');
+        const words = value.trim().split(/\s+/).filter(word => word.length > 0);
+        if (words.length > 3) {
+            value = words.slice(0, 3).join(' ');
+        }
+        e.target.value = value;
+    });
+}
+
+// Handle adding new category
+function handleAddCategory() {
+    const input = document.getElementById('new-category-input');
+    const categoryName = input.value.trim();
+
+    if (!categoryName) {
+        promptManager.showStatus('Please enter a category name', 'error');
+        return;
+    }
+
+    try {
+        config.addCategory(categoryName);
+        input.value = '';
+        loadCategoriesDisplay();
+        populateCategoryDropdown();
+        promptManager.showStatus(`Category "${categoryName}" added successfully!`, 'success');
+    } catch (error) {
+        promptManager.showStatus(`Error: ${error.message}`, 'error');
+    }
+}
+
+// Handle removing category
+function handleRemoveCategory(categoryName) {
+    if (!confirm(`Are you sure you want to remove the category "${categoryName}"?\n\nNote: Existing prompts with this category will keep their category, but you won't be able to select it for new prompts.`)) {
+        return;
+    }
+
+    try {
+        config.removeCategory(categoryName);
+        loadCategoriesDisplay();
+        populateCategoryDropdown();
+        promptManager.showStatus(`Category "${categoryName}" removed successfully!`, 'success');
+    } catch (error) {
+        promptManager.showStatus(`Error: ${error.message}`, 'error');
+    }
+}
+
+// Load and display categories in management panel
+function loadCategoriesDisplay() {
+    const categoriesList = document.getElementById('categories-list');
+    const categories = config.getCategories();
+
+    if (categories.length === 0) {
+        categoriesList.innerHTML = '<p class="no-categories">No categories found.</p>';
+        return;
+    }
+
+    const categoriesHtml = categories.map(category => {
+        const isDefault = category === 'DEFAULT';
+        return `
+            <div class="category-item ${isDefault ? 'default-category' : ''}">
+                <div class="category-info">
+                    <span class="category-name">${category}</span>
+                    ${isDefault ? '<span class="default-badge">Default</span>' : ''}
+                </div>
+                ${!isDefault ? `
+                    <button class="remove-category-btn" onclick="handleRemoveCategory('${category}')" title="Remove category">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                ` : ''}
+            </div>
+        `;
+    }).join('');
+
+    categoriesList.innerHTML = categoriesHtml;
+}
+
+// Populate category dropdown in add prompt form
+function populateCategoryDropdown() {
+    const categorySelect = document.getElementById('prompt-category');
+    const categories = config.getCategories();
+
+    // Clear existing options
+    categorySelect.innerHTML = '';
+
+    // Add categories as options
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        if (category === 'DEFAULT') {
+            option.selected = true;
+        }
+        categorySelect.appendChild(option);
+    });
+}
+
+// Make handleRemoveCategory globally available
+window.handleRemoveCategory = handleRemoveCategory;
+
 // Load existing configuration into the UI
 function loadConfigurationUI() {
     if (config.isConfigured()) {
@@ -139,6 +275,10 @@ function loadConfigurationUI() {
         document.getElementById('repo-name').value = config.repoName;
         document.getElementById('branch-name').value = config.branchName;
     }
+    
+    // Load categories display and dropdown
+    loadCategoriesDisplay();
+    populateCategoryDropdown();
 }
 
 // Handle configuration saving
