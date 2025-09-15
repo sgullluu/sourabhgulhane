@@ -189,11 +189,10 @@ async function handlePromptSubmission(event) {
     // Get form data
     const name = document.getElementById('prompt-name').value.trim();
     const promptText = document.getElementById('prompt-text').value.trim();
-    const rating = parseInt(document.getElementById('prompt-rating').value);
     const attachmentFile = document.getElementById('prompt-attachment').files[0];
 
     // Validate form data
-    const validation = promptManager.validatePromptData(name, promptText, rating);
+    const validation = promptManager.validatePromptData(name, promptText);
     
     if (!validation.isValid) {
         promptManager.showStatus(`Validation error: ${validation.errors.join(', ')}`, 'error');
@@ -214,7 +213,8 @@ async function handlePromptSubmission(event) {
         const promptData = {
             name,
             promptText,
-            rating,
+            rating: 0, // Default rating, will be set in saved prompts
+            verified: false, // Default verification status
             attachment
         };
 

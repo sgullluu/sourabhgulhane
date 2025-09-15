@@ -8,7 +8,7 @@ class PromptManager {
     }
 
     // Validate prompt data
-    validatePromptData(name, promptText, rating) {
+    validatePromptData(name, promptText) {
         const errors = [];
 
         if (!name || name.trim().length === 0) {
@@ -17,10 +17,6 @@ class PromptManager {
 
         if (!promptText || promptText.trim().length === 0) {
             errors.push('Prompt text is required');
-        }
-
-        if (!rating || rating < 1 || rating > 5) {
-            errors.push('Rating must be between 1 and 5');
         }
 
         return {
@@ -61,7 +57,8 @@ class PromptManager {
 
     // Format prompt for display
     formatPromptForDisplay(prompt) {
-        const ratingStars = '⭐'.repeat(parseInt(prompt.rating));
+        const rating = parseInt(prompt.rating) || 0;
+        const verified = prompt.verified || false;
         const createdDate = prompt.createdAt ? new Date(prompt.createdAt).toLocaleDateString() : 'Unknown';
         const promptId = this.generateId(); // Generate unique ID for each prompt card
         
@@ -112,7 +109,9 @@ class PromptManager {
                 <div class="prompt-header" onclick="promptManager.togglePromptCard('${promptId}')">
                     <div class="prompt-title-section">
                         <h3 class="prompt-name">${this.escapeHtml(prompt.name)}</h3>
-                        <div class="prompt-rating">${ratingStars}</div>
+                        <div class="prompt-status">
+                            ${verified ? '<i class="fas fa-check-circle verified-icon" title="Verified"></i>' : ''}
+                        </div>
                     </div>
                     <div class="expand-icon">
                         <i class="fas fa-chevron-down"></i>
@@ -121,6 +120,26 @@ class PromptManager {
                 <div class="prompt-content" id="content-${promptId}">
                     <div class="prompt-text">${this.escapeHtml(prompt.promptText)}</div>
                     ${attachmentHtml}
+                    <div class="prompt-controls">
+                        <div class="rating-control">
+                            <label>Rating:</label>
+                            <div class="star-rating" data-filename="${prompt.filename}" data-sha="${prompt.sha}">
+                                ${[1,2,3,4,5].map(star => 
+                                    `<i class="fas fa-star ${star <= rating ? 'active' : ''}" 
+                                       onclick="promptManager.updateRating('${prompt.filename}', '${prompt.sha}', ${star})"
+                                       data-rating="${star}"></i>`
+                                ).join('')}
+                            </div>
+                        </div>
+                        <div class="verify-control">
+                            <label class="verify-checkbox">
+                                <input type="checkbox" ${verified ? 'checked' : ''} 
+                                       onchange="promptManager.updateVerification('${prompt.filename}', '${prompt.sha}', this.checked)">
+                                <span class="checkmark"></span>
+                                Verified
+                            </label>
+                        </div>
+                    </div>
                     <div class="prompt-meta">
                         <span class="prompt-date">Created: ${createdDate}</span>
                         <button class="delete-btn" onclick="promptManager.handleDeletePrompt('${prompt.filename}', '${prompt.sha}')">
@@ -319,6 +338,119 @@ class PromptManager {
     // Generate unique ID for prompt cards
     generateId() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
+
+    // Update prompt rating
+    async updateRating(filename, sha, newRating) {
+        try {
+            // Find the prompt in our local array
+            const prompt = this.prompts.find(p => p.filename === filename);
+            if (!prompt) {
+                this.showStatus('Prompt not found', 'error');
+                return;
+            }
+
+            // Update the rating
+            prompt.rating = newRating;
+            prompt.updatedAt = new Date().toISOString();
+
+            // Save to GitHub
+            const result = await this.updatePromptFile(filename, sha, prompt);
+            if (result.success) {
+                this.showStatus('Rating updated successfully!', 'success');
+                // Update the visual stars
+                this.updateStarsVisual(filename, newRating);
+            } else {
+                this.showStatus(`Error updating rating: ${result.error}`, 'error');
+            }
+        } catch (error) {
+            this.showStatus(`Error updating rating: ${error.message}`, 'error');
+        }
+    }
+
+    // Update prompt verification status
+    async updateVerification(filename, sha, verified) {
+        try {
+            // Find the prompt in our local array
+            const prompt = this.prompts.find(p => p.filename === filename);
+            if (!prompt) {
+                this.showStatus('Prompt not found', 'error');
+                return;
+            }
+
+            // Update the verification status
+            prompt.verified = verified;
+            prompt.updatedAt = new Date().toISOString();
+
+            // Save to GitHub
+            const result = await this.updatePromptFile(filename, sha, prompt);
+            if (result.success) {
+                this.showStatus(`Prompt ${verified ? 'verified' : 'unverified'} successfully!`, 'success');
+                // Update the visual verification icon
+                this.updateVerificationVisual(filename, verified);
+            } else {
+                this.showStatus(`Error updating verification: ${result.error}`, 'error');
+            }
+        } catch (error) {
+            this.showStatus(`Error updating verification: ${error.message}`, 'error');
+        }
+    }
+
+    // Update prompt file on GitHub
+    async updatePromptFile(filename, sha, promptData) {
+        try {
+            const url = `${this.githubAPI.config.getApiBaseUrl()}/contents/${this.githubAPI.config.promptsFolder}/${filename}`;
+            
+            const data = {
+                message: `Update prompt: ${promptData.name}`,
+                content: btoa(JSON.stringify(promptData, null, 2)),
+                sha: sha,
+                branch: this.githubAPI.config.branchName
+            };
+
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: this.githubAPI.config.getHeaders(),
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`Failed to update prompt: ${response.status} ${response.statusText}. ${errorData.message || ''}`);
+            }
+
+            return { success: true, data: await response.json() };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    }
+
+    // Update stars visual display
+    updateStarsVisual(filename, rating) {
+        const starContainer = document.querySelector(`[data-filename="${filename}"] .star-rating`);
+        if (starContainer) {
+            const stars = starContainer.querySelectorAll('.fas.fa-star');
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+        }
+    }
+
+    // Update verification visual display
+    updateVerificationVisual(filename, verified) {
+        const card = document.querySelector(`[data-filename="${filename}"]`);
+        if (card) {
+            const statusDiv = card.querySelector('.prompt-status');
+            if (verified) {
+                statusDiv.innerHTML = '<i class="fas fa-check-circle verified-icon" title="Verified"></i>';
+            } else {
+                statusDiv.innerHTML = '';
+            }
+        }
     }
 }
 
