@@ -122,6 +122,8 @@ function switchToTab(targetTab) {
         // Handle tab-specific actions
         if (targetTab === 'saved-prompts' && config.isConfigured()) {
             promptManager.refreshPrompts();
+            // Ensure category filter is populated
+            populateCategoryFilter();
         } else if (targetTab === 'dashboard') {
             updateDashboard();
         }
@@ -142,10 +144,80 @@ function setupFilterTabs() {
             // Add active class to clicked button
             button.classList.add('active');
             
-            // Filter prompts based on selection
-            promptManager.filterPrompts(filter);
+            // Apply combined filters
+            applyAllFilters();
         });
     });
+    
+    // Setup advanced filters
+    setupAdvancedFilters();
+}
+
+// Setup advanced filter functionality
+function setupAdvancedFilters() {
+    const categoryFilter = document.getElementById('category-filter');
+    const ratingFilter = document.getElementById('rating-filter');
+    const clearFiltersBtn = document.getElementById('clear-filters');
+    
+    // Populate category filter dropdown
+    populateCategoryFilter();
+    
+    // Add event listeners for filter changes
+    categoryFilter.addEventListener('change', applyAllFilters);
+    ratingFilter.addEventListener('change', applyAllFilters);
+    
+    // Clear filters functionality
+    clearFiltersBtn.addEventListener('click', clearAllFilters);
+}
+
+// Populate category filter dropdown
+function populateCategoryFilter() {
+    const categoryFilter = document.getElementById('category-filter');
+    const categories = config.getCategories();
+    
+    // Clear existing options except the first one
+    categoryFilter.innerHTML = '<option value="">All Categories</option>';
+    
+    // Add category options
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        categoryFilter.appendChild(option);
+    });
+}
+
+// Apply all active filters
+function applyAllFilters() {
+    const activeTab = document.querySelector('.filter-tab.active');
+    const verificationFilter = activeTab ? activeTab.getAttribute('data-filter') : 'all';
+    const categoryFilter = document.getElementById('category-filter').value;
+    const ratingFilter = document.getElementById('rating-filter').value;
+    
+    const filters = {
+        verification: verificationFilter,
+        category: categoryFilter,
+        minRating: ratingFilter ? parseInt(ratingFilter) : null
+    };
+    
+    promptManager.filterPrompts(filters);
+}
+
+// Clear all filters
+function clearAllFilters() {
+    // Reset verification filter to "All"
+    const allTab = document.querySelector('.filter-tab[data-filter="all"]');
+    if (allTab) {
+        document.querySelectorAll('.filter-tab').forEach(btn => btn.classList.remove('active'));
+        allTab.classList.add('active');
+    }
+    
+    // Reset dropdown filters
+    document.getElementById('category-filter').value = '';
+    document.getElementById('rating-filter').value = '';
+    
+    // Apply filters (which will show all prompts)
+    applyAllFilters();
 }
 
 // Setup category management
@@ -264,6 +336,12 @@ function populateCategoryDropdown() {
         }
         categorySelect.appendChild(option);
     });
+    
+    // Also update the filter dropdown if it exists
+    const categoryFilterExists = document.getElementById('category-filter');
+    if (categoryFilterExists) {
+        populateCategoryFilter();
+    }
 }
 
 // Make handleRemoveCategory globally available

@@ -1,7 +1,14 @@
 // Prompt management utilities and UI helpers
 import GitHubAPI from './github-api.js';
 
-class PromptManager {
+class PromptManage        return `
+            <div class="prompt-card collapsible" 
+                 data-filename="${prompt.filename}" 
+                 data-sha="${prompt.sha}" 
+                 data-verified="${verified}" 
+                 data-category="${prompt.category || 'DEFAULT'}" 
+                 data-rating="${prompt.rating || 0}">
+                <div class="prompt-header" onclick="promptManager.togglePromptCard('${promptId}')">`
     constructor() {
         this.githubAPI = new GitHubAPI();
         this.prompts = [];
@@ -554,24 +561,52 @@ class PromptManager {
     }
 
     // Filter prompts by verification status
-    filterPrompts(filter) {
+    filterPrompts(filters) {
         const cards = document.querySelectorAll('.prompt-card');
         const categorySections = document.querySelectorAll('.category-section');
         
+        // Handle both old string format and new object format for backward compatibility
+        let verificationFilter, categoryFilter, minRatingFilter;
+        
+        if (typeof filters === 'string') {
+            verificationFilter = filters;
+            categoryFilter = '';
+            minRatingFilter = null;
+        } else {
+            verificationFilter = filters.verification || 'all';
+            categoryFilter = filters.category || '';
+            minRatingFilter = filters.minRating || null;
+        }
+        
         cards.forEach(card => {
             const verified = card.getAttribute('data-verified') === 'true';
-            let show = false;
+            const category = card.getAttribute('data-category') || '';
+            const rating = parseInt(card.getAttribute('data-rating') || '0');
             
-            switch(filter) {
-                case 'all':
-                    show = true;
-                    break;
+            let show = true;
+            
+            // Apply verification filter
+            switch(verificationFilter) {
                 case 'verified':
-                    show = verified;
+                    show = show && verified;
                     break;
                 case 'unverified':
-                    show = !verified;
+                    show = show && !verified;
                     break;
+                case 'all':
+                default:
+                    // Show all
+                    break;
+            }
+            
+            // Apply category filter
+            if (categoryFilter && categoryFilter !== '') {
+                show = show && (category === categoryFilter);
+            }
+            
+            // Apply rating filter
+            if (minRatingFilter !== null && minRatingFilter > 0) {
+                show = show && (rating >= minRatingFilter);
             }
             
             card.style.display = show ? 'block' : 'none';
@@ -593,7 +628,8 @@ class PromptManager {
             noResults.innerHTML = `
                 <div class="no-prompts">
                     <i class="fas fa-search"></i>
-                    <p>No ${filter} prompts found.</p>
+                    <p>No prompts match the current filters.</p>
+                    <small>Try adjusting your filter criteria</small>
                 </div>
             `;
             if (!document.querySelector('.no-results')) {

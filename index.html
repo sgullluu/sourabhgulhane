@@ -237,16 +237,48 @@
                         </div>
                         
                         <!-- Prompt Filter Tabs -->
-                        <div class="prompt-filter-tabs">
-                            <button class="filter-tab active" data-filter="all">
-                                <i class="fas fa-list"></i> All
-                            </button>
-                            <button class="filter-tab" data-filter="verified">
-                                <i class="fas fa-check-circle"></i> Verified
-                            </button>
-                            <button class="filter-tab" data-filter="unverified">
-                                <i class="fas fa-clock"></i> Unverified
-                            </button>
+                        <div class="filter-section">
+                            <div class="prompt-filter-tabs">
+                                <button class="filter-tab active" data-filter="all">
+                                    <i class="fas fa-list"></i> All
+                                </button>
+                                <button class="filter-tab" data-filter="verified">
+                                    <i class="fas fa-check-circle"></i> Verified
+                                </button>
+                                <button class="filter-tab" data-filter="unverified">
+                                    <i class="fas fa-clock"></i> Unverified
+                                </button>
+                            </div>
+                            
+                            <div class="advanced-filters">
+                                <div class="filter-group">
+                                    <label for="category-filter">
+                                        <i class="fas fa-folder"></i> Category:
+                                    </label>
+                                    <select id="category-filter">
+                                        <option value="">All Categories</option>
+                                        <!-- Categories will be populated dynamically -->
+                                    </select>
+                                </div>
+                                
+                                <div class="filter-group">
+                                    <label for="rating-filter">
+                                        <i class="fas fa-star"></i> Min Rating:
+                                    </label>
+                                    <select id="rating-filter">
+                                        <option value="">Any Rating</option>
+                                        <option value="5">5 Stars</option>
+                                        <option value="4">4+ Stars</option>
+                                        <option value="3">3+ Stars</option>
+                                        <option value="2">2+ Stars</option>
+                                        <option value="1">1+ Stars</option>
+                                    </select>
+                                </div>
+                                
+                                <button id="clear-filters" class="clear-filters-btn" title="Clear all filters">
+                                    <i class="fas fa-times"></i> Clear
+                                </button>
+                            </div>
                         </div>
                         
                         <div id="loading" class="loading">
