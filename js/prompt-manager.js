@@ -1,14 +1,7 @@
 // Prompt management utilities and UI helpers
 import GitHubAPI from './github-api.js';
 
-class PromptManage        return `
-            <div class="prompt-card collapsible" 
-                 data-filename="${prompt.filename}" 
-                 data-sha="${prompt.sha}" 
-                 data-verified="${verified}" 
-                 data-category="${prompt.category || 'DEFAULT'}" 
-                 data-rating="${prompt.rating || 0}">
-                <div class="prompt-header" onclick="promptManager.togglePromptCard('${promptId}')">`
+class PromptManager {
     constructor() {
         this.githubAPI = new GitHubAPI();
         this.prompts = [];
