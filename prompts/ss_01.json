@@ -3,7 +3,7 @@
   "promptText": "Close-up of a woman in a sheer pastel saree wet under monsoon rain, leaning on an old iron balcony railing. Droplets glisten on her shoulders, blurred neon reflections shimmer on wet city streets below. Shot on Sony A7R V with 50mm f/1.2 lens, cinematic bokeh, editorial fashion mood.",
   "category": "PHOTOGRAPHY",
   "rating": null,
-  "verified": true,
+  "verified": false,
   "attachment": {
     "name": "IMG_7828.png",
     "type": "image/png",
@@ -12,5 +12,7 @@
   },
   "id": "mfkyxn6ugczu0r5eaz",
   "createdAt": "2025-09-15T10:15:45.318Z",
-  "updatedAt": "2025-09-17T09:06:28.188Z"
+  "updatedAt": "2025-09-17T18:14:46.292Z",
+  "filename": "ss_01.json",
+  "sha": "04a6093a649e151d50285ea5eeec6c516eeb39c3"
 }
